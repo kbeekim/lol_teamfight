@@ -13,7 +13,7 @@ import excel
 import soldier_window
 
 absolute_path = "C:/Users/YS KIM/PycharmProjects/pythonProject/"
-form_class = uic.loadUiType(absolute_path + "untitled.ui")[0]
+form_class = uic.loadUiType(absolute_path + "main_window.ui")[0]
 excel_data = excel.ExcelClass()
 
 MAX_PLAYER_CNT = 10
