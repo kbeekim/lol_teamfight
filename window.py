@@ -4,11 +4,13 @@ from itertools import combinations
 from PyQt5.QtCore import QCoreApplication, Qt, QEvent, QMimeData
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QToolTip, QMainWindow, QAction, qApp
-from PyQt5 import uic
+from PyQt5 import uic, QtWidgets
 from PyQt5.QtWidgets import *
 from django.conf.locale import pl
 
 import excel
+#kb.todo path 설정
+import soldier_window
 
 absolute_path = "C:/Users/YS KIM/PycharmProjects/pythonProject/"
 form_class = uic.loadUiType(absolute_path + "untitled.ui")[0]
@@ -25,6 +27,7 @@ PLAYER_BTN_DEFAULT = 0
 PLAYER_BTN_NORMAL = 1
 PLAYER_BTN_GROUP = 2
 PLAYER_BTN_DIVISION = 3
+PLAYER_BTN_SOLDIER = 4
 
 PLAYER_INFO_ERROR_WRONG_IDX = -1
 PLAYER_INFO_ERROR_INFO_IS_EMPTY = -2
@@ -82,12 +85,12 @@ class WindowClass(QMainWindow, form_class):
     def __init__(self):
         super().__init__()
         self.setupUi(self)
+        self.setWindowTitle("롤 인력시장 기록소")
 
         # 10명의 참가자 정보 List
         self.pl = PlayerInfoClass()
         self.player_btn_list = [None] * MAX_PLAYER_CNT
         self.selected_worker = []         # listWidget 에 disable 된 item(worker) 을 다시 원복 해주기 위해 ..
-        self.team_info = [0] * MAX_PLAYER_CNT
 
         # 인력 목록
         # SelectionMode = 0 = > NoSelection        # SelectionMode = 1 = > SingleSelection
@@ -127,8 +130,12 @@ class WindowClass(QMainWindow, form_class):
         self.insert_group_btn.clicked.connect(self.clicked_insert_group_btn)
         # 분할 투입 버튼
         self.insert_division_btn.clicked.connect(self.clicked_insert_division_btn)
+        # 용병 추가 버튼
+        self.insert_soldier_btn.clicked.connect(self.clicked_insert_soldier_btn)
+        self.soldier = None
         # 인력 리스트 더블 클릭 시
         self.worker_list_widget.itemDoubleClicked.connect(self.double_clicked_worker)
+
         # # 검색 버튼
         # self.searchUserEdit.returnPressed.connect(self.clicked_search_worker)
 
@@ -156,16 +163,26 @@ class WindowClass(QMainWindow, form_class):
     def double_clicked_worker(self):
         self.clicked_insert_worker_btn()
 
+    #kb.todo
     def clicked_make_team_btn(self):
         if not self.pl.get_player_cnt() == MAX_PLAYER_CNT:
             print("모든 정원이 차지 않았습니다. ㄱㄱ?")
             return
 
+    # kb.todo
+    def clicked_insert_soldier_btn(self):
+        if self.pl.get_player_cnt() == MAX_PLAYER_CNT:
+            print("더 이상 들어갈 자리가 없어보입니다.")
+            return
+        if not self.soldier:
+            self.soldier = soldier_window.SoldierWindow(self)
+
+        self.soldier.show()
+
     def clicked_clear_btn(self):
         for idx in range(MAX_PLAYER_CNT):
             self.player_btn_list[idx].setText(str(idx + 1))
             self.pl.clear_player_info(idx)
-            self.team_info[idx] = 0
             self.color_player_btn(idx, PLAYER_BTN_DEFAULT)
 
         self.refresh_player_cnt()
@@ -233,10 +250,9 @@ class WindowClass(QMainWindow, form_class):
 
             self.selected_worker.append(workers[i])
 
-            print("추가 인력:  " + worker_name)
+            print("[kb.test] 추가 인력:  " + worker_name)
             for idx in range(MAX_PLAYER_CNT):
                 if self.pl.is_empty_player_info(idx):
-                    # self.player_info[idx] = excel_data.get_worker_info_by_nickname(worker_name)
                     self.pl.set_player_info(idx, excel_data.get_worker_info_by_nickname(worker_name))
                     self.player_btn_list[idx].setText(worker_name)
 
@@ -247,7 +263,6 @@ class WindowClass(QMainWindow, form_class):
                     if team_flag == TEAM_FLAG_DIVISION:
                         self.color_player_btn(idx, PLAYER_BTN_DIVISION)
 
-                    self.team_info[idx] = team_flag
                     break
 
         self.refresh_player_cnt()
@@ -257,7 +272,7 @@ class WindowClass(QMainWindow, form_class):
             self.player_btn_list[btn_idx].setStyleSheet(
                 "color: black;"
                 "background-color: white;"
-                "border: 1px solid black;"
+                "border: 2px solid black;"
             )
         elif color == PLAYER_BTN_GROUP:
             self.player_btn_list[btn_idx].setStyleSheet(
@@ -271,6 +286,12 @@ class WindowClass(QMainWindow, form_class):
                 "background-color: white;"
                 "border: 2px solid rgb(251, 86, 7);"
             )
+        elif color == PLAYER_BTN_SOLDIER:
+            self.player_btn_list[btn_idx].setStyleSheet(
+                "color: black;"
+                "background-color: white;"
+                "border: 2px solid rgb(0, 120, 62);"
+            )
         else:
             self.player_btn_list[btn_idx].setStyleSheet(
                 "color: black;"
@@ -278,5 +299,19 @@ class WindowClass(QMainWindow, form_class):
                 "border: 1px solid black;"
             )
 
-    def show_message(self, str):
-        self.statusBar().showMessage(str)
+    # kb.todo worker_info 이 유동적으로 바뀔 수 있도록 수정해야함
+    def insert_soldier_to_player(self, soldier_nick, soldier_info):
+        if self.pl.get_player_cnt() == MAX_PLAYER_CNT:
+            print("실패 : 이대로 가다간 배가 침몰할 수 있어요!")
+            return
+        for idx in range(MAX_PLAYER_CNT):
+            if self.pl.is_empty_player_info(idx):
+                #kb.todo
+                self.pl.set_player_info(idx, soldier_info)
+                self.player_btn_list[idx].setText(soldier_nick)
+                self.color_player_btn(idx, PLAYER_BTN_SOLDIER)
+                break
+        self.refresh_player_cnt()
+
+    def show_message(self, msg):
+        self.statusBar().showMessage(msg, 1000)
