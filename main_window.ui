@@ -57,7 +57,7 @@
        <string>용병 투입</string>
       </property>
      </widget>
-     <widget class="QLineEdit" name="searchUserEdit">
+     <widget class="QLineEdit" name="search_edit">
       <property name="geometry">
        <rect>
         <x>620</x>
@@ -66,26 +66,13 @@
         <height>31</height>
        </rect>
       </property>
-      <property name="text">
-       <string/>
-      </property>
-     </widget>
-     <widget class="QPushButton" name="pushButton_4">
-      <property name="geometry">
-       <rect>
-        <x>830</x>
-        <y>10</y>
-        <width>71</width>
-        <height>31</height>
-       </rect>
-      </property>
       <property name="font">
        <font>
-        <family>Noto Sans Korean Regular</family>
+        <family>맑은 고딕</family>
        </font>
       </property>
       <property name="text">
-       <string>검색</string>
+       <string/>
       </property>
      </widget>
      <widget class="QListWidget" name="worker_list_widget">
@@ -105,7 +92,7 @@
       <property name="geometry">
        <rect>
         <x>30</x>
-        <y>20</y>
+        <y>30</y>
         <width>301</width>
         <height>31</height>
        </rect>
@@ -246,6 +233,27 @@
       <property name="text">
        <string>분할
 투입</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="search_clear_btn">
+      <property name="geometry">
+       <rect>
+        <x>830</x>
+        <y>10</y>
+        <width>71</width>
+        <height>31</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <family>Noto Sans Korean Regular</family>
+       </font>
+      </property>
+      <property name="autoFillBackground">
+       <bool>true</bool>
+      </property>
+      <property name="text">
+       <string>비우기</string>
       </property>
      </widget>
     </widget>

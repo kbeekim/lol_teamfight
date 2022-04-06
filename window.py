@@ -1,6 +1,7 @@
 import sys
 from itertools import combinations
 
+import self as self
 from PyQt5.QtCore import QCoreApplication, Qt, QEvent, QMimeData
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QToolTip, QMainWindow, QAction, qApp
@@ -9,9 +10,9 @@ from PyQt5.QtWidgets import *
 from django.conf.locale import pl
 
 import excel
-#kb.todo path 설정
 import soldier_window
 
+#kb.todo path 설정
 absolute_path = "C:/Users/YS KIM/PycharmProjects/pythonProject/"
 form_class = uic.loadUiType(absolute_path + "main_window.ui")[0]
 excel_data = excel.ExcelClass()
@@ -63,6 +64,15 @@ class PlayerInfoClass():
         if not self.player_cnt == 0:
             self.player_cnt -= 1
 
+    # 이미 선택되어 있는지 확인하는 함수
+    def is_player_already_in(self, in_text):
+        # worker_info 와 연계 kb.todo
+        for idx in range(len(self.player_info)):
+            if self.player_info[idx] is not None:   # 위험! None 이면..
+                if self.player_info[idx][1] == in_text:
+                    return True
+        return False
+
     def get_player_cnt(self):
         return self.player_cnt
 
@@ -82,6 +92,10 @@ class PlayerInfoClass():
 
 
 class WindowClass(QMainWindow, form_class):
+    SOLDIER_INFO_SUCCESS = 0
+    SOLDIER_INFO_ERROR_FULL_PLAYER = 1
+    SOLDIER_INFO_ERROR_SAME_NAME = 2
+
     def __init__(self):
         super().__init__()
         self.setupUi(self)
@@ -90,15 +104,16 @@ class WindowClass(QMainWindow, form_class):
         # 10명의 참가자 정보 List
         self.pl = PlayerInfoClass()
         self.player_btn_list = [None] * MAX_PLAYER_CNT
-        self.selected_worker = []         # listWidget 에 disable 된 item(worker) 을 다시 원복 해주기 위해 ..
+
+        # self.selected_worker = []         # listWidget 에 disable 된 item(worker) 을 다시 원복 해주기 위해 ..
 
         # 인력 목록
         # SelectionMode = 0 = > NoSelection        # SelectionMode = 1 = > SingleSelection
         # SelectionMode = 2 = > MultiSelection     # SelectionMode = 3 = > ExtendedSelection
         # SelectionMode = 4 = > ContiguousSelection
         self.worker_list_widget.setSelectionMode(3)
-        nick_list = excel_data.get_worker_nickname()
-        for nl in nick_list:
+        self.nick_list = excel_data.get_worker_nickname()
+        for nl in self.nick_list:
             self.worker_list_widget.addItem(str(nl))
 
         # 10명 GridLayout 안 player 버튼
@@ -135,9 +150,11 @@ class WindowClass(QMainWindow, form_class):
         self.soldier = None
         # 인력 리스트 더블 클릭 시
         self.worker_list_widget.itemDoubleClicked.connect(self.double_clicked_worker)
-
-        # # 검색 버튼
-        # self.searchUserEdit.returnPressed.connect(self.clicked_search_worker)
+        # 검색 엔진
+        self.search_edit.textChanged.connect(self.search_worker_filter)
+        self.search_edit.setPlaceholderText("인력 검색")
+        # 비우기 버튼
+        self.search_clear_btn.clicked.connect(self.clicked_search_clear_btn)
 
         # 출발 (팀짜기) 버튼
         self.make_team_btn.setStyleSheet(
@@ -152,6 +169,9 @@ class WindowClass(QMainWindow, form_class):
         # ( x / 10 ) label
         self.refresh_player_cnt()
 
+    def clicked_search_clear_btn(self):
+        self.search_edit.setText("")
+
     def refresh_player_cnt(self):
         cnt = self.pl.get_player_cnt()
         self.player_cnt_label.setText(str(cnt) + "/" + str(MAX_PLAYER_CNT))
@@ -163,13 +183,22 @@ class WindowClass(QMainWindow, form_class):
     def double_clicked_worker(self):
         self.clicked_insert_worker_btn()
 
+    def search_worker_filter(self, filter_text):
+        self.worker_list_widget.clear()
+
+        for nl in self.nick_list:
+            # kbeekim) 대소문자 구분 없이 검색하도록 한다.
+            if filter_text.casefold() in nl.casefold():
+                self.worker_list_widget.addItem(nl)
+
+        self.refresh_worker_list()
+
     #kb.todo
     def clicked_make_team_btn(self):
         if not self.pl.get_player_cnt() == MAX_PLAYER_CNT:
             print("모든 정원이 차지 않았습니다. ㄱㄱ?")
             return
 
-    # kb.todo
     def clicked_insert_soldier_btn(self):
         if self.pl.get_player_cnt() == MAX_PLAYER_CNT:
             print("더 이상 들어갈 자리가 없어보입니다.")
@@ -187,17 +216,12 @@ class WindowClass(QMainWindow, form_class):
 
         self.refresh_player_cnt()
 
-        items = self.selected_worker
-        for i in range(len(items)):
-            items[i].setFlags(Qt.ItemIsEnabled |
-                              Qt.ItemIsSelectable)
-        self.selected_worker.clear()
+        self.search_edit.setText("")
+        self.refresh_worker_list()
 
     def clicked_player_btn(self):
         player_btn = self.sender()
         btn_idx = int(player_btn.objectName())
-        player_nick = player_btn.text()
-        selected_worker_idx = -1
 
         # 해당 idx 에 해당하는 player_info 존재한다면 btn text 변환 및 list 초기화
         if not self.pl.is_empty_player_info(btn_idx):
@@ -206,13 +230,7 @@ class WindowClass(QMainWindow, form_class):
             self.color_player_btn(btn_idx, PLAYER_BTN_DEFAULT)
             self.refresh_player_cnt()
 
-            items = self.selected_worker
-            for i in range(len(items)):
-                if items[i].text() == player_nick:
-                    items[i].setFlags(Qt.ItemIsEnabled |
-                                      Qt.ItemIsSelectable)
-                    del self.selected_worker[i]
-                    break
+            self.refresh_worker_list()
 
     def clicked_insert_worker_btn(self):
         self.insert_worker_to_player(self.worker_list_widget.selectedItems(), TEAM_FLAG_NORMAL)
@@ -248,8 +266,6 @@ class WindowClass(QMainWindow, form_class):
             worker_name = workers[i].text()
             workers[i].setFlags(Qt.NoItemFlags)
 
-            self.selected_worker.append(workers[i])
-
             print("[kb.test] 추가 인력:  " + worker_name)
             for idx in range(MAX_PLAYER_CNT):
                 if self.pl.is_empty_player_info(idx):
@@ -262,7 +278,6 @@ class WindowClass(QMainWindow, form_class):
                         self.color_player_btn(idx, PLAYER_BTN_GROUP)
                     if team_flag == TEAM_FLAG_DIVISION:
                         self.color_player_btn(idx, PLAYER_BTN_DIVISION)
-
                     break
 
         self.refresh_player_cnt()
@@ -299,19 +314,41 @@ class WindowClass(QMainWindow, form_class):
                 "border: 1px solid black;"
             )
 
-    # kb.todo worker_info 이 유동적으로 바뀔 수 있도록 수정해야함
+    # kb.todo] worker_info 이 유동적으로 바뀔 수 있도록 수정해야함 (연계)
+    # kb.todo] soldier_info 안에 nickname mmr 있어서 꺼내써도되는데.. 일단은..
     def insert_soldier_to_player(self, soldier_nick, soldier_info):
         if self.pl.get_player_cnt() == MAX_PLAYER_CNT:
-            print("실패 : 이대로 가다간 배가 침몰할 수 있어요!")
-            return
+            return self.SOLDIER_INFO_ERROR_FULL_PLAYER
+        if self.pl.is_player_already_in(soldier_nick):
+            return self.SOLDIER_INFO_ERROR_SAME_NAME
+
         for idx in range(MAX_PLAYER_CNT):
             if self.pl.is_empty_player_info(idx):
-                #kb.todo
                 self.pl.set_player_info(idx, soldier_info)
                 self.player_btn_list[idx].setText(soldier_nick)
                 self.color_player_btn(idx, PLAYER_BTN_SOLDIER)
                 break
         self.refresh_player_cnt()
+        return self.SOLDIER_INFO_SUCCESS
+
+    def refresh_worker_list(self):
+        """ worker_list_widget 의 Flag (활성/비활성화) 를 갱신하는 함수
+          - worker_list_widget 안 items 들의 닉네임과 player_list 를 비교하여
+          - 이미 등록된 player 의 경우 Flag 를 비활성화한다.
+          - worker_list_widget 이 변경되거나 player_list 가 변경될 때 호출해주면 된다.
+        Args:
+            -
+        Returns:
+            -
+        """
+        for idx in range(self.worker_list_widget.count()):
+            item = self.worker_list_widget.item(idx)
+
+            if self.pl.is_player_already_in(item.text()):
+                item.setFlags(Qt.NoItemFlags)
+            else:
+                item.setFlags(Qt.ItemIsEnabled |
+                                      Qt.ItemIsSelectable)
 
     def show_message(self, msg):
         self.statusBar().showMessage(msg, 1000)

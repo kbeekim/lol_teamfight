@@ -112,7 +112,7 @@
     </font>
    </property>
    <property name="text">
-    <string>확인</string>
+    <string>투입</string>
    </property>
   </widget>
   <widget class="QPushButton" name="cancel_btn">
@@ -157,6 +157,9 @@
    </property>
    <property name="autoFillBackground">
     <bool>false</bool>
+   </property>
+   <property name="currentText">
+    <string/>
    </property>
   </widget>
   <widget class="QLabel" name="mmr_label">

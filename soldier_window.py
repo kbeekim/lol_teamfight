@@ -3,6 +3,7 @@ from PyQt5 import uic
 from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QWidget
+from PySide2.QtWidgets import QComboBox
 
 absolute_path = "C:/Users/YS KIM/PycharmProjects/pythonProject/"
 form_class = uic.loadUiType(absolute_path + "soldier_window.ui")[0]
@@ -59,6 +60,7 @@ class SoldierWindow(QWidget, form_class):
 
         mmr_refer_str = ""
         # mmr spinner
+
         for i in range(len(MMR_LIST)):
             str_tier = MMR_LIST[i]['tier']
             str_mmr = str(MMR_LIST[i]['mmr'])
@@ -69,6 +71,13 @@ class SoldierWindow(QWidget, form_class):
                 mmr_refer_str += "\n"
             elif i != len(MMR_LIST) - 1:
                 mmr_refer_str += " / "
+
+        # kbeekim) 콤보박스의 init 문구를 설정하려했는데 Editable 할 때 setPlaceholderText로 설정 가능하여 그닥..
+        # 아니면 마우스 event 로 만들 수 있긴 할 듯한데.. 굳이.. 그냥 비워두는거에 만족하자
+        # self.mmr_combo_box.setEditable(True)
+        # self.mmr_combo_box.lineEdit().setPlaceholderText("티어 선택")
+        # self.mmr_combo_box.setCurrentIndex(-1)
+        self.mmr_combo_box.setCurrentIndex(-1)
 
         # mmr 수동 입력 창
         self.mmr_edit.hide()
@@ -115,19 +124,29 @@ class SoldierWindow(QWidget, form_class):
                 self.show_alert_message("우리집 고양이가 mmr을 입력했나보군요", ALERT_MSG_TYPE_NORMAL)
                 return
             mmr = int(mmr_str)
-        else:
+        else:  # mmr 자동 입력이라면
             idx = self.mmr_combo_box.currentIndex()
+            if idx == -1:
+                self.show_alert_message("mmr 칸이 쓸쓸해 보이네요", ALERT_MSG_TYPE_NORMAL)
+                return
             mmr = MMR_LIST[idx]['mmr']
 
-        self.main_window.insert_soldier_to_player(nickname, make_soldier_info(nickname, mmr))
-        self.close_soldier_window()
+        # main_window 와 연계됨.
+        ret = self.main_window.insert_soldier_to_player(nickname, make_soldier_info(nickname, mmr))
+
+        if ret == self.main_window.SOLDIER_INFO_SUCCESS:
+            self.close_soldier_window()
+        elif ret == self.main_window.SOLDIER_INFO_ERROR_FULL_PLAYER:
+            self.show_alert_message("이대로 가다간 배가 침몰할 수 있어요", ALERT_MSG_TYPE_NORMAL)
+        elif ret == self.main_window.SOLDIER_INFO_ERROR_SAME_NAME :
+            self.show_alert_message("어디서 많이 본 분이시군요?", ALERT_MSG_TYPE_NORMAL)
 
     def clicked_cancel_btn(self):
         self.close_soldier_window()
 
     def close_soldier_window(self):
         self.nickname_edit.clear()
-        self.mmr_combo_box.setCurrentIndex(0)
+        self.mmr_combo_box.setCurrentIndex(-1)
         self.mmr_edit.clear()
         if self.manual_radio.isChecked():  # mmr 수동 입력이라면
             self.mmr_edit.hide()
@@ -139,14 +158,14 @@ class SoldierWindow(QWidget, form_class):
     # kbeekim) 애초에 window 가 아닌 QWidget 로 만들어버려 상태바를 못쓰게되었다.
     # TextLabel 과 QTimer로 대략적인 문구표출 기능을 하게 함
     def show_alert_message(self, msg, alert_type):
-        print("[kb.test] 폰트:  " + self.alert_label.font().family())
+        # print("[kb.test] 폰트:  " + self.alert_label.font().family())
         self.timer.stop()
 
         if alert_type == ALERT_MSG_TYPE_NORMAL:
             self.timer.start(ALERT_MSG_TIMEOUT_NORMAL)
             self.alert_label.setStyleSheet(
                 # kb.check 이상하게 연속으로 호출하면 Gulim 으로 바뀜;
-                "font-family: Noto Sans Korean;"
+                "font-family: Noto Sans Korean Regular;"
                 "color: red;"
             )
             self.alert_label.setText(msg)
