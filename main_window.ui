@@ -10,7 +10,7 @@
     <x>0</x>
     <y>0</y>
     <width>1169</width>
-    <height>652</height>
+    <height>688</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -29,7 +29,7 @@
       <x>0</x>
       <y>0</y>
       <width>931</width>
-      <height>621</height>
+      <height>631</height>
      </rect>
     </property>
     <property name="currentIndex">

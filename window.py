@@ -34,6 +34,10 @@ PLAYER_INFO_ERROR_WRONG_IDX = -1
 PLAYER_INFO_ERROR_INFO_IS_EMPTY = -2
 PLAYER_INFO_ERROR_FULL_PLAYER = -3
 
+STATUS_BAR_TIMEOUT_DEFAULT = 2000
+STATUS_BAR_TYPE_NORMAL = 0
+STATUS_BAR_TYPE_WARN =  1
+
 
 class PlayerInfoClass():
     def __init__(self):
@@ -169,12 +173,19 @@ class WindowClass(QMainWindow, form_class):
         # ( x / 10 ) label
         self.refresh_player_cnt()
 
+        # 상태바
+        self.statusBar().setFont(QFont("Noto_Sans", 12))
+
     def clicked_search_clear_btn(self):
         self.search_edit.setText("")
 
     def refresh_player_cnt(self):
         cnt = self.pl.get_player_cnt()
         self.player_cnt_label.setText(str(cnt) + "/" + str(MAX_PLAYER_CNT))
+
+        if cnt == MAX_PLAYER_CNT - 1:
+            self.show_message("환호와 박수가 대기 중입니다. (9/10)", STATUS_BAR_TYPE_NORMAL)
+
         if cnt == MAX_PLAYER_CNT:
             self.make_team_btn.show()
         elif self.make_team_btn.isEnabled():
@@ -196,12 +207,12 @@ class WindowClass(QMainWindow, form_class):
     #kb.todo
     def clicked_make_team_btn(self):
         if not self.pl.get_player_cnt() == MAX_PLAYER_CNT:
-            print("모든 정원이 차지 않았습니다. ㄱㄱ?")
+            self.show_message("모든 정원이 차지 않았습니다.", STATUS_BAR_TYPE_WARN)
             return
 
     def clicked_insert_soldier_btn(self):
         if self.pl.get_player_cnt() == MAX_PLAYER_CNT:
-            print("더 이상 들어갈 자리가 없어보입니다.")
+            self.show_message("더 이상 들어갈 자리가 없어보입니다.", STATUS_BAR_TYPE_WARN)
             return
         if not self.soldier:
             self.soldier = soldier_window.SoldierWindow(self)
@@ -244,29 +255,32 @@ class WindowClass(QMainWindow, form_class):
 
     def insert_worker_to_player(self, workers, team_flag):
         if len(workers) == 0:
-            print("실패 : 인력 선택을 안했습니다.")
+            self.show_message("인력 선택이 안되어있습니다.", STATUS_BAR_TYPE_WARN)
             return
         elif not self.pl.get_player_cnt() + len(workers) <= MAX_PLAYER_CNT:
-            print("실패 : 이대로 가다간 배가 침몰할 수 있어요!")
+            self.show_message("이대로 가다간 배가 침몰할 거 깉이요!   (10명 정원 초과)", STATUS_BAR_TYPE_WARN)
             return
 
         if team_flag == TEAM_FLAG_GROUP:
             if len(workers) < 2:
-                print("실패 : 적어도 두 명은 선택하셔야죠!")
+                self.show_message("그룹이라면 적어도 두 명은 선택하셔야죠!", STATUS_BAR_TYPE_WARN)
                 return
             elif len(workers) > MAX_GROUP_MEMBER:
-                print("실패 : 한 팀에 최대 5명 입니다!")
+                self.show_message("한 팀에 최대 5명 입니다!", STATUS_BAR_TYPE_WARN)
                 return
         if team_flag == TEAM_FLAG_DIVISION:
-            if not len(workers) == 2:
-                print("실패 : 적 수는 오직 2명 입니다.")
+            if len(workers) == 1:
+                self.show_message("나 자신과의 싸움은 나중으로 미루죠   (2명 선택)", STATUS_BAR_TYPE_WARN)
+                return
+            if len(workers) > 2:
+                self.show_message("적을 많이 만들어서 좋을 건 없죠   (2명 선택)", STATUS_BAR_TYPE_WARN)
                 return
 
         for i in range(len(workers)):
             worker_name = workers[i].text()
             workers[i].setFlags(Qt.NoItemFlags)
 
-            print("[kb.test] 추가 인력:  " + worker_name)
+            # print("[kb.test] 추가 인력:  " + worker_name)
             for idx in range(MAX_PLAYER_CNT):
                 if self.pl.is_empty_player_info(idx):
                     self.pl.set_player_info(idx, excel_data.get_worker_info_by_nickname(worker_name))
@@ -353,5 +367,14 @@ class WindowClass(QMainWindow, form_class):
                 item.setFlags(Qt.ItemIsEnabled |
                                       Qt.ItemIsSelectable)
 
-    def show_message(self, msg):
-        self.statusBar().showMessage(msg, 1000)
+    def show_message(self, msg, msg_type):
+        if msg_type == STATUS_BAR_TYPE_NORMAL:
+            self.statusBar().setStyleSheet(
+                "color: black;"
+            )
+            self.statusBar().showMessage(msg, STATUS_BAR_TIMEOUT_DEFAULT)
+        elif msg_type == STATUS_BAR_TYPE_WARN:
+            self.statusBar().setStyleSheet(
+                "color: red;"
+            )
+            self.statusBar().showMessage(msg, STATUS_BAR_TIMEOUT_DEFAULT)
