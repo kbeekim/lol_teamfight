@@ -1,28 +1,24 @@
-import sys
-from itertools import combinations
-
-import self as self
-from PyQt5.QtCore import QCoreApplication, Qt, QEvent, QMimeData
+from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QToolTip, QMainWindow, QAction, qApp
-from PyQt5 import uic, QtWidgets
+from PyQt5.QtWidgets import QPushButton
+from PyQt5 import uic
 from PyQt5.QtWidgets import *
-from django.conf.locale import pl
 
 import excel
 import soldier_window
 
-#kb.todo path 설정
-absolute_path = "C:/Users/YS KIM/PycharmProjects/pythonProject/"
-form_class = uic.loadUiType(absolute_path + "main_window.ui")[0]
+# kb.todo next] path 설정
+relative_path = "./"
+form_class = uic.loadUiType(relative_path + "img/ui/main_window.ui")[0]
 excel_data = excel.ExcelClass()
 
 MAX_PLAYER_CNT = 10
 MAX_GROUP_MEMBER = 5
 
-TEAM_FLAG_NORMAL = 0
-TEAM_FLAG_GROUP = 1
-TEAM_FLAG_DIVISION = 2
+PLAYER_FLAG_NORMAL = 0
+PLAYER_FLAG_GROUP = 1
+PLAYER_FLAG_DIVISION = 2
+PLAYER_FLAG_SOLDIER = 3
 
 PLAYER_BTN_DEFAULT = 0
 PLAYER_BTN_NORMAL = 1
@@ -30,75 +26,223 @@ PLAYER_BTN_GROUP = 2
 PLAYER_BTN_DIVISION = 3
 PLAYER_BTN_SOLDIER = 4
 
+PLAYER_INFO_SUCCESS = 0
 PLAYER_INFO_ERROR_WRONG_IDX = -1
 PLAYER_INFO_ERROR_INFO_IS_EMPTY = -2
 PLAYER_INFO_ERROR_FULL_PLAYER = -3
+PLAYER_INFO_ERROR_NO_WORKER = -4
+PLAYER_INFO_ERROR_GROUP_LESS_THEN_2 = -5
+PLAYER_INFO_ERROR_GROUP_MORE_THEN_5 = -6
+PLAYER_INFO_ERROR_DIV_LESS_THEN_2 = -7
+PLAYER_INFO_ERROR_DIV_MORE_THEN_2 = -8
+PLAYER_INFO_ERROR_SAME_NAME = -9
 
 STATUS_BAR_TIMEOUT_DEFAULT = 2000
+STATUS_BAR_TIMEOUT_SHORT = 1000
 STATUS_BAR_TYPE_NORMAL = 0
-STATUS_BAR_TYPE_WARN =  1
+STATUS_BAR_TYPE_WARN = 1
+
+TEAM_POS_A = 0
+TEAM_POS_B = 1
 
 
 class PlayerInfoClass():
     def __init__(self):
         self.player_info = [None] * MAX_PLAYER_CNT
+        #     [Flag / Number / cnt ]
+        # ex) [Group / 1 / 3 ] : 3명이 동시에 그룹 투입이 되어서 온 그룹1 인 참여자
+        self.player_type = [None] * MAX_PLAYER_CNT
         self.player_cnt = 0
 
-    def set_player_info(self, idx, info):
-        if not 0 <= idx < MAX_PLAYER_CNT:
-            return PLAYER_INFO_ERROR_WRONG_IDX
-        elif self.player_cnt >= MAX_PLAYER_CNT:
+        self.normal_number = 0
+        self.group_number = 0
+        self.division_number = 0
+
+        self.teamA = [None] * MAX_GROUP_MEMBER
+        self.teamB = [None] * MAX_GROUP_MEMBER
+        self.team_pos = TEAM_POS_A
+
+    def set_player_info(self, worker_info_list, flag):
+        """ player_info 를 set 하는 함수
+            - 10명의 player 의 info 를 set 한다. (player_info 는 worker_info 의 파생)
+            - worker_list_widget 이 변경되거나 player_list 가 변경될 때 호출해주면 된다.
+        Args:
+            - worker_info_list: 요소가 worker_info 형식인 List
+            - flag : 일반 / 그룹 / 분할 / 용병
+        Returns:
+            - 성공 시, 설정한 IDX 들의 List 를 반환
+            - 실패 시, Int 형 ERROR CODE 반환
+        """
+        ret_idx_list = []
+        worker_cnt = len(worker_info_list)
+        # 예외처리 부분===================================================
+        if worker_cnt == 0:
+            return PLAYER_INFO_ERROR_NO_WORKER
+        elif not self.get_player_cnt() + worker_cnt <= MAX_PLAYER_CNT:
             return PLAYER_INFO_ERROR_FULL_PLAYER
 
-        self.player_info[idx] = info
-        self.player_cnt += 1
+        if flag == PLAYER_FLAG_GROUP:
+            if worker_cnt < 2:
+                return PLAYER_INFO_ERROR_GROUP_LESS_THEN_2
+            elif worker_cnt > MAX_GROUP_MEMBER:
+                return PLAYER_INFO_ERROR_GROUP_MORE_THEN_5
+
+        elif flag == PLAYER_FLAG_DIVISION:
+            if worker_cnt < 2:
+                return PLAYER_INFO_ERROR_DIV_LESS_THEN_2
+            if worker_cnt > 2:
+                return PLAYER_INFO_ERROR_DIV_MORE_THEN_2
+
+        elif flag == PLAYER_FLAG_SOLDIER:
+            if self.is_player_already_in(worker_info_list[0][1]):  # 용병 이름 연계
+                return PLAYER_INFO_ERROR_SAME_NAME
+        # 예외처리 부분===================================================
+
+        if flag == PLAYER_FLAG_GROUP:
+            self.group_number += 1
+            number = self.group_number
+        elif flag == PLAYER_FLAG_DIVISION:
+            self.division_number += 1
+            number = self.division_number
+        else:
+            self.normal_number += worker_cnt
+            number = self.normal_number
+
+        for worker_idx in range(worker_cnt):
+            for idx in range(MAX_PLAYER_CNT):
+                if self.is_empty_player_info(idx):
+                    self.player_info[idx] = worker_info_list[worker_idx]
+                    self.player_type[idx] = [flag, number, worker_cnt]
+                    ret_idx_list.append(idx)
+                    break
+
+        self.player_cnt += worker_cnt
+
+        print(self.player_type)
+
+        return ret_idx_list
 
     def get_player_info(self, idx):
+        """ player_info 를 get 하는 함수
+        Args:
+            - idx: 해당 idx 에 해당하는 player_info 반환
+        Returns:
+            - player_info
+        """
         if not 0 <= idx < MAX_PLAYER_CNT:
             return PLAYER_INFO_ERROR_WRONG_IDX
-        elif self.player_info[idx] is None:
+        elif self.is_empty_player_info(idx):
             return PLAYER_INFO_ERROR_INFO_IS_EMPTY
+
         return self.player_info[idx]
 
     def clear_player_info(self, idx):
+        """ player_info 를 clear 하는 함수
+        Args:
+            - idx: 해당 idx 에 해당하는 player_info 를 제거함
+            -      추가로 같은 그룹이거나 분할 flag 도 같이 제거한다.
+        Returns:
+            - 성공 시, 제거한 IDX 들의 List 를 반환
+            - 실패 시, Int 형 ERROR CODE 반환
+        """
+        with_idx_list = []
+        # 예외처리 부분===================================================
         if not 0 <= idx < MAX_PLAYER_CNT:
             return PLAYER_INFO_ERROR_WRONG_IDX
 
+        if self.is_empty_player_info(idx):
+            return []
+        # 예외처리 부분===================================================
+
+        need_more_clear = False
+        if self.player_type[idx] is not None:
+            if self.player_type[idx][0] == PLAYER_FLAG_GROUP:
+                need_more_clear = True
+                self.group_number -= 1
+            elif self.player_type[idx][0] == PLAYER_FLAG_DIVISION:
+                need_more_clear = True
+                self.division_number -= 1
+            else:
+                self.normal_number -= 1
+
+        # kbeekim) 그룹/분할 의 경우에는 같은 Flag 도 같이 지우자
+        if need_more_clear:
+            with_idx_list = self.get_same_flag_player_list(idx)
+            for with_idx in with_idx_list:
+                self.player_info[with_idx] = None
+                self.player_type[with_idx] = None
+                if not self.player_cnt == 0:
+                    self.player_cnt -= 1
+
+        # 본인 idx 정보 지우기
         self.player_info[idx] = None
+        self.player_type[idx] = None
         if not self.player_cnt == 0:
             self.player_cnt -= 1
 
-    # 이미 선택되어 있는지 확인하는 함수
+        print(self.player_type)
+        return with_idx_list
+
+    def get_same_flag_player_list(self, idx):
+        """ 같은 flag 를 가진 IDX List 를 찾는 함수
+        Args:
+            - idx: 해당 idx 의 flag 와 동일한 것을 찾는다.
+        Returns:
+            - IDX 들의 List 를 반환
+        """
+        ret_idx = []
+
+        for i in range(MAX_PLAYER_CNT):
+            if self.player_type[i] is not None:   # 위험! None 이면..
+                if i != idx:
+                    if self.player_type[idx][0] == self.player_type[i][0]:
+                        if self.player_type[idx][1] == self.player_type[i][1]:
+                            if self.player_type[idx][2] == self.player_type[i][2]:
+                                ret_idx.append(i)
+        return ret_idx
+
     def is_player_already_in(self, in_text):
-        # worker_info 와 연계 kb.todo
+        """ 같은 닉네임을 가진 player 가 있는지 확인하는 함수
+        Args:
+            - in_text: 해당 문자열과 동일한 player 를 찾는다.
+        Returns:
+            - True / False
+        """
+        # worker_info 와 연계
         for idx in range(len(self.player_info)):
-            if self.player_info[idx] is not None:   # 위험! None 이면..
+            if self.player_info[idx] is not None:  # 위험! None 이면..
                 if self.player_info[idx][1] == in_text:
                     return True
         return False
 
     def get_player_cnt(self):
+        """ 총 참가자 수를 반환한다.
+        """
         return self.player_cnt
 
-    # 해당 idx 에 해당하는 참가자 정보가 비어있는지 확인한다.
     def is_empty_player_info(self, idx):
+        """ 해당 idx 에 해당하는 참가자 정보가 비어있는지 확인하는 함수
+        """
         if self.player_info[idx] is not None:
             return False
         else:
             return True
 
-    # 참가자가 모두 찼는지 확인한다.
-    def is_full_player_info(self):
-        for i in self.player_info:
-            if i is None:
-                return False
-        return True
+    def get_flag_cnt(self, flag):
+        """ 해당 flag 에 해당하는 cnt 를 반환하는 함수
+        """
+        if flag == PLAYER_FLAG_GROUP:
+            return self.group_number
+        elif flag == PLAYER_FLAG_DIVISION:
+            return self.division_number
+        else:
+            return self.normal_number
 
 
 class WindowClass(QMainWindow, form_class):
     SOLDIER_INFO_SUCCESS = 0
-    SOLDIER_INFO_ERROR_FULL_PLAYER = 1
-    SOLDIER_INFO_ERROR_SAME_NAME = 2
+    SOLDIER_INFO_ERROR_FULL_PLAYER = PLAYER_INFO_ERROR_FULL_PLAYER
+    SOLDIER_INFO_ERROR_SAME_NAME = PLAYER_INFO_ERROR_SAME_NAME
 
     def __init__(self):
         super().__init__()
@@ -108,8 +252,6 @@ class WindowClass(QMainWindow, form_class):
         # 10명의 참가자 정보 List
         self.pl = PlayerInfoClass()
         self.player_btn_list = [None] * MAX_PLAYER_CNT
-
-        # self.selected_worker = []         # listWidget 에 disable 된 item(worker) 을 다시 원복 해주기 위해 ..
 
         # 인력 목록
         # SelectionMode = 0 = > NoSelection        # SelectionMode = 1 = > SingleSelection
@@ -183,9 +325,6 @@ class WindowClass(QMainWindow, form_class):
         cnt = self.pl.get_player_cnt()
         self.player_cnt_label.setText(str(cnt) + "/" + str(MAX_PLAYER_CNT))
 
-        if cnt == MAX_PLAYER_CNT - 1:
-            self.show_message("환호와 박수가 대기 중입니다. (9/10)", STATUS_BAR_TYPE_NORMAL)
-
         if cnt == MAX_PLAYER_CNT:
             self.make_team_btn.show()
         elif self.make_team_btn.isEnabled():
@@ -204,11 +343,15 @@ class WindowClass(QMainWindow, form_class):
 
         self.refresh_worker_list()
 
-    #kb.todo
+    # kb.todo first
     def clicked_make_team_btn(self):
         if not self.pl.get_player_cnt() == MAX_PLAYER_CNT:
             self.show_message("모든 정원이 차지 않았습니다.", STATUS_BAR_TYPE_WARN)
             return
+        print("-----------------------------------------------------")
+        print("일반:  " + str(self.pl.get_flag_cnt(PLAYER_FLAG_NORMAL)))
+        print("그룹:  " + str(self.pl.get_flag_cnt(PLAYER_FLAG_GROUP)))
+        print("분할:  " + str(self.pl.get_flag_cnt(PLAYER_FLAG_DIVISION)))
 
     def clicked_insert_soldier_btn(self):
         if self.pl.get_player_cnt() == MAX_PLAYER_CNT:
@@ -235,66 +378,70 @@ class WindowClass(QMainWindow, form_class):
         btn_idx = int(player_btn.objectName())
 
         # 해당 idx 에 해당하는 player_info 존재한다면 btn text 변환 및 list 초기화
-        if not self.pl.is_empty_player_info(btn_idx):
-            self.pl.clear_player_info(btn_idx)
+        ret = self.pl.clear_player_info(btn_idx)
+        
+        if isinstance(ret, list):
+            with_idx_list = ret
+            if (len(with_idx_list)) != 0: # 같이 지워야할게 있을 때
+                for i in with_idx_list:
+                    self.player_btn_list[i].setText(str(i + 1))
+                    self.set_style_player_btn(i, PLAYER_BTN_DEFAULT)
+
             player_btn.setText(str(btn_idx + 1))
             self.set_style_player_btn(btn_idx, PLAYER_BTN_DEFAULT)
-            self.refresh_player_cnt()
 
+            self.refresh_player_cnt()
             self.refresh_worker_list()
+        elif isinstance(ret, int):
+            self.check_error_code_to_msg(ret)
+        else:
+            self.show_message("[clicked_player_btn] UNKNOWN ERROR", STATUS_BAR_TYPE_WARN)
+            return
 
     def clicked_insert_worker_btn(self):
-        self.insert_worker_to_player(self.worker_list_widget.selectedItems(), TEAM_FLAG_NORMAL)
+        self.insert_worker_to_player(self.worker_list_widget.selectedItems(), PLAYER_FLAG_NORMAL)
 
     def clicked_insert_group_btn(self):
-        self.insert_worker_to_player(self.worker_list_widget.selectedItems(), TEAM_FLAG_GROUP)
+        self.insert_worker_to_player(self.worker_list_widget.selectedItems(), PLAYER_FLAG_GROUP)
 
     def clicked_insert_division_btn(self):
-        self.insert_worker_to_player(self.worker_list_widget.selectedItems(), TEAM_FLAG_DIVISION)
+        self.insert_worker_to_player(self.worker_list_widget.selectedItems(), PLAYER_FLAG_DIVISION)
         return
 
-    def insert_worker_to_player(self, workers, team_flag):
-        if len(workers) == 0:
-            self.show_message("인력 선택이 안되어있습니다.", STATUS_BAR_TYPE_WARN)
-            return
-        elif not self.pl.get_player_cnt() + len(workers) <= MAX_PLAYER_CNT:
-            self.show_message("이대로 가다간 배가 침몰할 거 깉이요!   (10명 정원 초과)", STATUS_BAR_TYPE_WARN)
-            return
-
-        if team_flag == TEAM_FLAG_GROUP:
-            if len(workers) < 2:
-                self.show_message("그룹이라면 적어도 두 명은 선택하셔야죠!", STATUS_BAR_TYPE_WARN)
-                return
-            elif len(workers) > MAX_GROUP_MEMBER:
-                self.show_message("한 팀에 최대 5명 입니다!", STATUS_BAR_TYPE_WARN)
-                return
-        if team_flag == TEAM_FLAG_DIVISION:
-            if len(workers) == 1:
-                self.show_message("나 자신과의 싸움은 나중으로 미루죠   (2명 선택)", STATUS_BAR_TYPE_WARN)
-                return
-            if len(workers) > 2:
-                self.show_message("적을 많이 만들어서 좋을 건 없죠   (2명 선택)", STATUS_BAR_TYPE_WARN)
-                return
-
+    def insert_worker_to_player(self, workers, player_flag):
+        worker_info_list = []
         for i in range(len(workers)):
-            worker_name = workers[i].text()
-            workers[i].setFlags(Qt.NoItemFlags)
+            worker_info_list.append(excel_data.get_worker_info_by_nickname(workers[i].text()))
 
-            # print("[kb.test] 추가 인력:  " + worker_name)
-            for idx in range(MAX_PLAYER_CNT):
-                if self.pl.is_empty_player_info(idx):
-                    self.pl.set_player_info(idx, excel_data.get_worker_info_by_nickname(worker_name))
-                    self.player_btn_list[idx].setText(worker_name)
+        ret = self.pl.set_player_info(worker_info_list, player_flag)
+        if isinstance(ret, list):
+            player_idx_list = ret
+            # return 값으로 player_list 의 idx를 받아 온다.
+            for i, player_idx in enumerate(player_idx_list):
+                worker_name = worker_info_list[i][1]  # 연계
 
-                    if team_flag == TEAM_FLAG_NORMAL:
-                        self.set_style_player_btn(idx, PLAYER_BTN_NORMAL)
-                    if team_flag == TEAM_FLAG_GROUP:
-                        self.set_style_player_btn(idx, PLAYER_BTN_GROUP)
-                    if team_flag == TEAM_FLAG_DIVISION:
-                        self.set_style_player_btn(idx, PLAYER_BTN_DIVISION)
-                    break
+                if player_flag == PLAYER_FLAG_GROUP:
+                    # tmp = f'{worker_name}\n(그룹)'
+                    self.player_btn_list[player_idx].setText(worker_name)
+                    self.set_style_player_btn(player_idx, PLAYER_BTN_GROUP)
+                elif player_flag == PLAYER_FLAG_DIVISION:
+                    # tmp = f'{worker_name}\n(분할)'
+                    self.player_btn_list[player_idx].setText(worker_name)
+                    self.set_style_player_btn(player_idx, PLAYER_BTN_DIVISION)
+                else:
+                    self.player_btn_list[player_idx].setText(worker_name)
+                    self.set_style_player_btn(player_idx, PLAYER_BTN_NORMAL)
 
-        self.refresh_player_cnt()
+            # 성공했으니 list 비활성화
+            for i in range(len(workers)):
+                workers[i].setFlags(Qt.NoItemFlags)
+
+            self.refresh_player_cnt()
+        elif isinstance(ret, int):
+            self.check_error_code_to_msg(ret)
+        else:
+            self.show_message("[insert_worker_to_player] UNKNOWN ERROR", STATUS_BAR_TYPE_WARN)
+            return
 
     def set_style_player_btn(self, btn_idx, color):
         if color == PLAYER_BTN_NORMAL:
@@ -328,25 +475,30 @@ class WindowClass(QMainWindow, form_class):
                 "border: 1px solid black;"
             )
 
-    # kb.todo] worker_info 이 유동적으로 바뀔 수 있도록 수정해야함 (연계)
-    # kb.todo] soldier_info 안에 nickname mmr 있어서 꺼내써도되는데.. 일단은..
-    def insert_soldier_to_player(self, soldier_nick, tier, soldier_info):
-        if self.pl.get_player_cnt() == MAX_PLAYER_CNT:
-            return self.SOLDIER_INFO_ERROR_FULL_PLAYER
-        if self.pl.is_player_already_in(soldier_nick):
-            return self.SOLDIER_INFO_ERROR_SAME_NAME
+    def insert_soldier_to_player(self, soldier_info, tier):
+        soldier_info_list = []
+        soldier_name = soldier_info[1]  # 연계
+        soldier_info_list.append(soldier_info)
+        # return 값으로 player_list 의 idx를 받아 온다.
+        ret = self.pl.set_player_info(soldier_info_list, PLAYER_FLAG_SOLDIER)
 
-        for idx in range(MAX_PLAYER_CNT):
-            if self.pl.is_empty_player_info(idx):
-                self.pl.set_player_info(idx, soldier_info)
-                tmp = f'{soldier_nick}\n({tier})'
-                self.player_btn_list[idx].setText(soldier_nick+"\n("+"다이아"+")")
-                self.player_btn_list[idx].setText(tmp)
+        if isinstance(ret, list): # 성공한 경우
+            player_idx_list = ret
+            if player_idx_list:
+                player_idx = player_idx_list[0]  # 용병은 1명 추가이므로
 
-                self.set_style_player_btn(idx, PLAYER_BTN_SOLDIER)
-                break
-        self.refresh_player_cnt()
-        return self.SOLDIER_INFO_SUCCESS
+                tmp = f'{soldier_name}\n({tier})'
+                self.player_btn_list[player_idx].setText(tmp)
+                self.set_style_player_btn(player_idx, PLAYER_BTN_SOLDIER)
+
+            self.refresh_player_cnt()
+            # soldier window 로 결과값 전송
+            return self.SOLDIER_INFO_SUCCESS
+        elif isinstance(ret, int):  # 실패한 경우
+            # soldier window 로 결과값 전송
+            return ret
+        else:
+            self.show_message("[insert_soldier_to_player] UNKNOWN ERROR", STATUS_BAR_TYPE_WARN)
 
     def refresh_worker_list(self):
         """ worker_list_widget 의 Flag (활성/비활성화) 를 갱신하는 함수
@@ -365,14 +517,32 @@ class WindowClass(QMainWindow, form_class):
                 item.setFlags(Qt.NoItemFlags)
             else:
                 item.setFlags(Qt.ItemIsEnabled |
-                                      Qt.ItemIsSelectable)
+                              Qt.ItemIsSelectable)
+
+    def check_error_code_to_msg(self, error_code):
+        if error_code == PLAYER_INFO_ERROR_WRONG_IDX:
+            self.show_message("IDX 가 이상합니다.", STATUS_BAR_TYPE_WARN)
+        elif error_code == PLAYER_INFO_ERROR_INFO_IS_EMPTY:
+            self.show_message("해당하는 사용자 정보가 없습니다.", STATUS_BAR_TYPE_WARN)
+        elif error_code == PLAYER_INFO_ERROR_FULL_PLAYER:
+            self.show_message("이대로 가다간 배가 침몰할 거 깉이요!   (10명 정원 초과)", STATUS_BAR_TYPE_WARN)
+        elif error_code == PLAYER_INFO_ERROR_NO_WORKER:
+            self.show_message("인력 선택이 안되어있습니다.", STATUS_BAR_TYPE_WARN)
+        elif error_code == PLAYER_INFO_ERROR_GROUP_LESS_THEN_2:
+            self.show_message("그룹이라면 적어도 두 명은 선택하셔야죠!", STATUS_BAR_TYPE_WARN)
+        elif error_code == PLAYER_INFO_ERROR_GROUP_MORE_THEN_5:
+            self.show_message("한 팀에 최대 5명 입니다!", STATUS_BAR_TYPE_WARN)
+        elif error_code == PLAYER_INFO_ERROR_DIV_LESS_THEN_2:
+            self.show_message("나 자신과의 싸움은 나중으로 미루죠   (2명 선택)", STATUS_BAR_TYPE_WARN)
+        elif error_code == PLAYER_INFO_ERROR_DIV_MORE_THEN_2:
+            self.show_message("적을 많이 만들어서 좋을 건 없죠   (2명 선택)", STATUS_BAR_TYPE_WARN)
 
     def show_message(self, msg, msg_type):
         if msg_type == STATUS_BAR_TYPE_NORMAL:
             self.statusBar().setStyleSheet(
                 "color: black;"
             )
-            self.statusBar().showMessage(msg, STATUS_BAR_TIMEOUT_DEFAULT)
+            self.statusBar().showMessage(msg, STATUS_BAR_TIMEOUT_SHORT)
         elif msg_type == STATUS_BAR_TYPE_WARN:
             self.statusBar().setStyleSheet(
                 "color: red;"

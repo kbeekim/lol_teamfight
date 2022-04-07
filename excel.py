@@ -4,7 +4,7 @@ import gspread
 import pandas as pd
 
 
-class ExcelClass():
+class ExcelClass:
 
     def __init__(self):
         super().__init__()
@@ -15,8 +15,8 @@ class ExcelClass():
         self.read_gspread()
 
     def read_gspread(self):
-        absolute_path = "C:/Users/YS KIM/PycharmProjects/pythonProject/"
-        json_key_path = absolute_path + "key/key.json"
+        relative_path = "./"
+        json_key_path = relative_path + "key/key.json"
         # gc = gspread.service_account(filename='google api 설정 하면서 내려 받아진 파일명')
         gc = gspread.service_account(filename=json_key_path)
         self.doc = gc.open('test')
@@ -47,7 +47,6 @@ class ExcelClass():
             if self.worker_info[i][1] == nickname:
                 return self.worker_info[i]
         return NULL
-
 
     def get_worker_info_total_member(self):
         return self.total_member

@@ -1,4 +1,3 @@
-# kb.todo path 설정
 import sys
 
 from PyQt5 import uic
@@ -6,8 +5,9 @@ from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtGui import QDoubleValidator
 from PyQt5.QtWidgets import QWidget
 
-absolute_path = "C:/Users/YS KIM/PycharmProjects/pythonProject/"
-form_class = uic.loadUiType(absolute_path + "soldier_window.ui")[0]
+# kb.todo next path 설정
+relative_path = "./"
+form_class = uic.loadUiType(relative_path + "img/ui/soldier_window.ui")[0]
 
 MIN_MMR_VALUE = 600
 MAX_MMR_VALUE = 2000
@@ -70,8 +70,8 @@ class SoldierWindow(QWidget, form_class):
     def __init__(self, parent):
         super().__init__()
         self.setupUi(self)
-        # kb.todo] exec_() main window 에서 대기 타고 싶은데 안됨.. 뭐가 문제인지 확인해보자
-        # kb.todo] init 시 main window 가져와서 여기서 main 쪽 데이터를 set 하고 close 하는 구조.. 두 window 의 biz 가 섞이는게 매우 별로임
+        # kb.todo next] exec_() main window 에서 대기 타고 싶은데 안됨.. 뭐가 문제인지 확인해보자
+        # kb.todo next] init 시 main window 가져와서 여기서 main 쪽 데이터를 set 하고 close 하는 구조.. 두 window 의 biz 가 섞이는게 매우 별로임
         self.main_window = parent
         self.setWindowTitle("용병 추가")
         # windowModality 설정을 NonModal -> ApplicationModal 으로 설정하여 해당 창을 종료 전까지 다른 창 사용 못하게 설정
@@ -160,7 +160,7 @@ class SoldierWindow(QWidget, form_class):
             tier = MMR_LIST[idx]['tier']
 
         # main_window 와 연계됨.
-        ret = self.main_window.insert_soldier_to_player(nickname, tier, make_soldier_info(nickname, mmr))
+        ret = self.main_window.insert_soldier_to_player(make_soldier_info(nickname, mmr), tier)
 
         if ret == self.main_window.SOLDIER_INFO_SUCCESS:
             self.close_soldier_window()
