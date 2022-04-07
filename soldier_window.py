@@ -1,22 +1,30 @@
 # kb.todo path 설정
+import sys
+
 from PyQt5 import uic
 from PyQt5.QtCore import Qt, QTimer
-from PyQt5.QtGui import QFont
+from PyQt5.QtGui import QDoubleValidator
 from PyQt5.QtWidgets import QWidget
-from PySide2.QtWidgets import QComboBox
 
 absolute_path = "C:/Users/YS KIM/PycharmProjects/pythonProject/"
 form_class = uic.loadUiType(absolute_path + "soldier_window.ui")[0]
 
-MMR_LIST = [{'tier': "다이아", 'mmr': 1150}
-    , {'tier': "플레티넘", 'mmr': 1100}
-    , {'tier': "골드", 'mmr': 1050}
-    , {'tier': "실버", 'mmr': 1000}
-    , {'tier': "브론즈", 'mmr': 950}
-    , {'tier': "아이언", 'mmr': 900}]
-
 MIN_MMR_VALUE = 600
 MAX_MMR_VALUE = 2000
+
+DIAMOND_MMR_VALUE = 1150
+PLATINUM_MMR_VALUE = 1100
+GOLD_MMR_VALUE = 1000
+SILVER_MMR_VALUE = 950
+BRONZE_MMR_VALUE = 750
+IRON_MMR_VALUE = 600
+
+MMR_LIST = [{'tier': "다이아", 'mmr': DIAMOND_MMR_VALUE}
+    , {'tier': "플레티넘", 'mmr': PLATINUM_MMR_VALUE}
+    , {'tier': "골드", 'mmr': GOLD_MMR_VALUE}
+    , {'tier': "실버", 'mmr': SILVER_MMR_VALUE}
+    , {'tier': "브론즈", 'mmr': BRONZE_MMR_VALUE}
+    , {'tier': "아이언", 'mmr': IRON_MMR_VALUE}]
 
 ALERT_MSG_TYPE_NORMAL = 0
 ALERT_MSG_TIMEOUT_NORMAL = 3000
@@ -45,6 +53,17 @@ def check_valid_mmr(mmr_str):
         return False
     else:
         return True
+
+
+def calc_mmr2tier(mmr_str):
+    mmr = int(mmr_str)
+
+    # 높은 티어부터 검색
+    for i in range(len(MMR_LIST)):
+        if mmr >= MMR_LIST[i]['mmr']:
+            return MMR_LIST[i]['tier']
+
+    return MMR_LIST[len(MMR_LIST)]['tier']
 
 
 class SoldierWindow(QWidget, form_class):
@@ -81,6 +100,7 @@ class SoldierWindow(QWidget, form_class):
 
         # mmr 수동 입력 창
         self.mmr_edit.hide()
+        self.mmr_edit.setValidator(QDoubleValidator())  # 실수만 입력 가능
 
         self.manual_radio.toggled.connect(self.clicked_manual_radio)
         # mmr 참고 라벨
@@ -111,8 +131,13 @@ class SoldierWindow(QWidget, form_class):
 
     def clicked_ok_btn(self):
         nickname = self.nickname_edit.text()
+        tier = ""
+
         if not nickname:
             self.show_alert_message("적어도 이름은 알아야 영혼을 불 태울 수 있죠", ALERT_MSG_TYPE_NORMAL)
+            return
+        elif len(nickname.encode("cp949")) > 16:  # 롤 닉네임 제한수 16Byte (한글 2Byte. 영문 1Byte)
+            self.show_alert_message("이름이 조금 긴 느낌이 듭니다.", ALERT_MSG_TYPE_NORMAL)
             return
 
         if self.manual_radio.isChecked():  # mmr 수동 입력이라면
@@ -121,24 +146,27 @@ class SoldierWindow(QWidget, form_class):
                 self.show_alert_message("아이언도 mmr은 있답니다.", ALERT_MSG_TYPE_NORMAL)
                 return
             elif not check_valid_mmr(mmr_str):
-                self.show_alert_message("우리집 고양이가 mmr을 입력했나보군요", ALERT_MSG_TYPE_NORMAL)
+                self.show_alert_message("우리집 고양이가 mmr을 입력했나보군요 ()", ALERT_MSG_TYPE_NORMAL)
                 return
             mmr = int(mmr_str)
+            tier = calc_mmr2tier(mmr_str)
         else:  # mmr 자동 입력이라면
             idx = self.mmr_combo_box.currentIndex()
+            tier = self.mmr_combo_box.currentText()
             if idx == -1:
                 self.show_alert_message("mmr 칸이 쓸쓸해 보이네요", ALERT_MSG_TYPE_NORMAL)
                 return
             mmr = MMR_LIST[idx]['mmr']
+            tier = MMR_LIST[idx]['tier']
 
         # main_window 와 연계됨.
-        ret = self.main_window.insert_soldier_to_player(nickname, make_soldier_info(nickname, mmr))
+        ret = self.main_window.insert_soldier_to_player(nickname, tier, make_soldier_info(nickname, mmr))
 
         if ret == self.main_window.SOLDIER_INFO_SUCCESS:
             self.close_soldier_window()
         elif ret == self.main_window.SOLDIER_INFO_ERROR_FULL_PLAYER:
             self.show_alert_message("이대로 가다간 배가 침몰할 수 있어요", ALERT_MSG_TYPE_NORMAL)
-        elif ret == self.main_window.SOLDIER_INFO_ERROR_SAME_NAME :
+        elif ret == self.main_window.SOLDIER_INFO_ERROR_SAME_NAME:
             self.show_alert_message("어디서 많이 본 분이시군요?", ALERT_MSG_TYPE_NORMAL)
 
     def clicked_cancel_btn(self):

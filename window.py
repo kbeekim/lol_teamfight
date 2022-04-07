@@ -121,9 +121,9 @@ class WindowClass(QMainWindow, form_class):
             for y in range(2):
                 turn = (2 * x) + y
                 self.player_btn_list[turn] = (QPushButton(str(turn + 1)))
-                self.color_player_btn(turn, PLAYER_BTN_DEFAULT)
+                self.set_style_player_btn(turn, PLAYER_BTN_DEFAULT)
 
-                self.player_btn_list[turn].setMaximumHeight(60)  # 버튼 높이 강제 조절
+                self.player_btn_list[turn].setMaximumHeight(70)  # 버튼 높이 강제 조절
                 self.player_btn_list[turn].setFont(QFont("Noto_Sans", 15))  # 폰트,크기 조절
 
                 # 버튼의 idx를 알기위해 ObjectName으로 정함
@@ -212,7 +212,7 @@ class WindowClass(QMainWindow, form_class):
         for idx in range(MAX_PLAYER_CNT):
             self.player_btn_list[idx].setText(str(idx + 1))
             self.pl.clear_player_info(idx)
-            self.color_player_btn(idx, PLAYER_BTN_DEFAULT)
+            self.set_style_player_btn(idx, PLAYER_BTN_DEFAULT)
 
         self.refresh_player_cnt()
 
@@ -227,7 +227,7 @@ class WindowClass(QMainWindow, form_class):
         if not self.pl.is_empty_player_info(btn_idx):
             self.pl.clear_player_info(btn_idx)
             player_btn.setText(str(btn_idx + 1))
-            self.color_player_btn(btn_idx, PLAYER_BTN_DEFAULT)
+            self.set_style_player_btn(btn_idx, PLAYER_BTN_DEFAULT)
             self.refresh_player_cnt()
 
             self.refresh_worker_list()
@@ -273,16 +273,16 @@ class WindowClass(QMainWindow, form_class):
                     self.player_btn_list[idx].setText(worker_name)
 
                     if team_flag == TEAM_FLAG_NORMAL:
-                        self.color_player_btn(idx, PLAYER_BTN_NORMAL)
+                        self.set_style_player_btn(idx, PLAYER_BTN_NORMAL)
                     if team_flag == TEAM_FLAG_GROUP:
-                        self.color_player_btn(idx, PLAYER_BTN_GROUP)
+                        self.set_style_player_btn(idx, PLAYER_BTN_GROUP)
                     if team_flag == TEAM_FLAG_DIVISION:
-                        self.color_player_btn(idx, PLAYER_BTN_DIVISION)
+                        self.set_style_player_btn(idx, PLAYER_BTN_DIVISION)
                     break
 
         self.refresh_player_cnt()
 
-    def color_player_btn(self, btn_idx, color):
+    def set_style_player_btn(self, btn_idx, color):
         if color == PLAYER_BTN_NORMAL:
             self.player_btn_list[btn_idx].setStyleSheet(
                 "color: black;"
@@ -316,7 +316,7 @@ class WindowClass(QMainWindow, form_class):
 
     # kb.todo] worker_info 이 유동적으로 바뀔 수 있도록 수정해야함 (연계)
     # kb.todo] soldier_info 안에 nickname mmr 있어서 꺼내써도되는데.. 일단은..
-    def insert_soldier_to_player(self, soldier_nick, soldier_info):
+    def insert_soldier_to_player(self, soldier_nick, tier, soldier_info):
         if self.pl.get_player_cnt() == MAX_PLAYER_CNT:
             return self.SOLDIER_INFO_ERROR_FULL_PLAYER
         if self.pl.is_player_already_in(soldier_nick):
@@ -325,8 +325,11 @@ class WindowClass(QMainWindow, form_class):
         for idx in range(MAX_PLAYER_CNT):
             if self.pl.is_empty_player_info(idx):
                 self.pl.set_player_info(idx, soldier_info)
-                self.player_btn_list[idx].setText(soldier_nick)
-                self.color_player_btn(idx, PLAYER_BTN_SOLDIER)
+                tmp = f'{soldier_nick}\n({tier})'
+                self.player_btn_list[idx].setText(soldier_nick+"\n("+"다이아"+")")
+                self.player_btn_list[idx].setText(tmp)
+
+                self.set_style_player_btn(idx, PLAYER_BTN_SOLDIER)
                 break
         self.refresh_player_cnt()
         return self.SOLDIER_INFO_SUCCESS
