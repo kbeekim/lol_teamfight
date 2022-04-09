@@ -71,7 +71,6 @@ class SoldierWindow(QWidget, form_class):
         super().__init__()
         self.setupUi(self)
         # kb.todo next] exec_() main window 에서 대기 타고 싶은데 안됨.. 뭐가 문제인지 확인해보자
-        # kb.todo next] init 시 main window 가져와서 여기서 main 쪽 데이터를 set 하고 close 하는 구조.. 두 window 의 biz 가 섞이는게 매우 별로임
         self.main_window = parent
         self.setWindowTitle("용병 추가")
         # windowModality 설정을 NonModal -> ApplicationModal 으로 설정하여 해당 창을 종료 전까지 다른 창 사용 못하게 설정
