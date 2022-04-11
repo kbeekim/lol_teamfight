@@ -1,7 +1,8 @@
 import itertools
+import os
 
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QFont
+from PyQt5.QtGui import QFont, QIcon
 from PyQt5.QtWidgets import QPushButton
 from PyQt5 import uic
 from PyQt5.QtWidgets import *
@@ -9,11 +10,11 @@ from PyQt5.QtWidgets import *
 import excel
 import soldier_window
 # kbeekim 확인
+import team_window
 from playerinfo import *
 
-# kb.todo next] path 설정
-relative_path = "./"
-form_class = uic.loadUiType(relative_path + "img/ui/main_window.ui")[0]
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+form_class = uic.loadUiType(BASE_DIR + '/img/ui/main_window.ui')[0]
 excel_data = excel.ExcelClass()
 
 
@@ -25,6 +26,9 @@ STATUS_BAR_TIMEOUT_WARN_LONG = 3000
 STATUS_BAR_TYPE_NORMAL = 0
 STATUS_BAR_TYPE_WARN = 1
 
+MAJOR_VERSION = 0
+MINOR_VERSION = 1
+
 
 class WindowClass(QMainWindow, form_class):
     SOLDIER_INFO_SUCCESS = 0
@@ -34,7 +38,9 @@ class WindowClass(QMainWindow, form_class):
     def __init__(self):
         super().__init__()
         self.setupUi(self)
-        self.setWindowTitle("롤 인력시장 기록소")
+        version = f'v{MAJOR_VERSION}.{MINOR_VERSION}'
+        self.setWindowTitle("롤 인력사무소 " + version)
+        self.setWindowIcon(QIcon(BASE_DIR + '/img/lol_worker.png'))
 
         # 10명의 참가자 정보 List
         self.pl = PlayerInfoClass()
@@ -45,9 +51,8 @@ class WindowClass(QMainWindow, form_class):
         # SelectionMode = 2 = > MultiSelection     # SelectionMode = 3 = > ExtendedSelection
         # SelectionMode = 4 = > ContiguousSelection
         self.worker_list_widget.setSelectionMode(3)
-        self.nick_list = excel_data.get_worker_nickname()
-        for nl in self.nick_list:
-            self.worker_list_widget.addItem(str(nl))
+        self.nick_list = None
+        self.load_worker_list()
 
         # 10명 GridLayout 안 player 버튼
         for x in range(5):
@@ -72,6 +77,15 @@ class WindowClass(QMainWindow, form_class):
             "background-color: white;"
             "border: 1px solid white;"
         )
+
+        # 데이터 로드 버튼
+        self.load_btn.clicked.connect(self.clicked_load_btn)
+        self.load_btn.setStyleSheet(
+            "color: black;"
+            "background-color: white;"
+            "border: 1px solid white;"
+        )
+
         # 투입 버튼
         self.insert_worker_btn.clicked.connect(self.clicked_insert_worker_btn)
         # 그룹 투입 버튼
@@ -97,6 +111,7 @@ class WindowClass(QMainWindow, form_class):
             "border-radius: 5px;"
         )
         self.make_team_btn.hide()
+        self.team = None
         self.make_team_btn.clicked.connect(self.clicked_make_team_btn)
 
         # ( x / 10 ) label
@@ -104,6 +119,14 @@ class WindowClass(QMainWindow, form_class):
 
         # 상태바
         self.statusBar().setFont(QFont("Noto_Sans", 12))
+
+    def clicked_load_btn(self):
+        # kb.todo 현재 선택된 닉네임 기억 -> 초기화 후 해당 닉네임으로 worker_list_widget 에서 찾아 설정
+        tmp_player_list = self.pl.get_all_player_info()
+
+        self.clicked_clear_btn()
+        excel_data.read_gspread()
+        self.load_worker_list()
 
     def clicked_search_clear_btn(self):
         self.search_edit.setText("")
@@ -134,18 +157,13 @@ class WindowClass(QMainWindow, form_class):
         if not self.pl.get_player_cnt() == MAX_PLAYER_CNT:
             self.show_message("모든 정원이 차지 않았습니다.", STATUS_BAR_TYPE_WARN, STATUS_BAR_TIMEOUT_WARN_SHORT)
             return
-
-        print("---------------------Test--------------------------------")
-        print("일반:  " + str(self.pl.get_flag_cnt(PLAYER_FLAG_NORMAL)))
-        print("그룹:  " + str(self.pl.get_flag_cnt(PLAYER_FLAG_GROUP)))
-        print("분할:  " + str(self.pl.get_flag_cnt(PLAYER_FLAG_DIVISION)))
-        print("-----------------------------------------------------")
-
         ret = self.pl.build_player_team()
 
         if ret == PLAYER_INFO_TEAM_BUILD_SUCCESS:
             self.show_message("성공!!!", STATUS_BAR_TYPE_WARN, STATUS_BAR_TIMEOUT_WARN_SHORT)
 
+            self.team = team_window.TeamWindow(self.pl.get_team_info(), self.pl.get_all_player_info())
+            self.team.show()
         else:
             self.check_error_code_to_msg(ret)
 
@@ -154,8 +172,8 @@ class WindowClass(QMainWindow, form_class):
             self.show_message("더 이상 들어갈 자리가 없어보입니다.", STATUS_BAR_TYPE_WARN, STATUS_BAR_TIMEOUT_WARN_SHORT)
             return
 
-        if not self.soldier:
-            self.soldier = soldier_window.SoldierWindow(self)
+        # if not self.soldier:
+        self.soldier = soldier_window.SoldierWindow(self)
         self.soldier.show()
 
     def clicked_clear_btn(self):
@@ -307,6 +325,13 @@ class WindowClass(QMainWindow, form_class):
             else:
                 item.setFlags(Qt.ItemIsEnabled |
                               Qt.ItemIsSelectable)
+
+    def load_worker_list(self):
+        self.worker_list_widget.clear()
+        self.nick_list = excel_data.get_worker_nickname()
+
+        for nl in self.nick_list:
+            self.worker_list_widget.addItem(str(nl))
 
     def check_error_code_to_msg(self, error_code):
         if error_code == PLAYER_INFO_ERROR_WRONG_IDX:

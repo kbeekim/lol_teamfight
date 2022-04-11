@@ -146,8 +146,8 @@
      <widget class="QPushButton" name="clear_btn">
       <property name="geometry">
        <rect>
-        <x>490</x>
-        <y>30</y>
+        <x>510</x>
+        <y>40</y>
         <width>75</width>
         <height>23</height>
        </rect>
@@ -259,6 +259,24 @@
       </property>
       <property name="text">
        <string>비우기</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="load_btn">
+      <property name="geometry">
+       <rect>
+        <x>510</x>
+        <y>10</y>
+        <width>75</width>
+        <height>23</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <family>Noto Sans Korean Regular</family>
+       </font>
+      </property>
+      <property name="text">
+       <string>load</string>
       </property>
      </widget>
     </widget>

@@ -1,5 +1,7 @@
 from numpy import double
 
+import team_window
+
 MAX_PLAYER_CNT = 10
 MAX_TEAM_MEMBER = 5
 
@@ -67,6 +69,9 @@ class PlayerInfoClass():
         #     [Flag / Number / cnt ]
         # ex) [Group / 1 / 3 ] : 3명이 동시에 그룹 투입이 되어서 온 그룹1 인 참여자
         self.player_type = [None] * MAX_PLAYER_CNT
+        
+        # [A팀 idx, A팀 mmr 합, B팀 idx, B팀 mmr 합]
+        self.team_info = []
 
         self.player_cnt = 0
         self.normal_number = 0
@@ -116,7 +121,7 @@ class PlayerInfoClass():
             self.division_number += 1
             number = self.division_number
         else:
-            self.normal_number += worker_cnt
+            self.normal_number += 1
             number = self.normal_number
 
         for worker_idx in range(worker_cnt):
@@ -144,6 +149,9 @@ class PlayerInfoClass():
             return PLAYER_INFO_ERROR_INFO_IS_EMPTY
 
         return self.player_info[idx]
+
+    def get_all_player_info(self):
+        return self.player_info
 
     def clear_player_info(self, idx):
         """ player_info 를 clear 하는 함수
@@ -189,7 +197,6 @@ class PlayerInfoClass():
         if not self.player_cnt == 0:
             self.player_cnt -= 1
 
-        print(self.player_type)
         return with_idx_list
 
     def get_same_flag_player_list(self, idx, include_self):
@@ -252,7 +259,6 @@ class PlayerInfoClass():
             return self.normal_number
 
     def build_player_team(self):
-
         all_case_list = []
         # ret = list(itertools.combinations(tmp, 5))
         ret = self.gen_comb([0, 1, 2, 3, 4, 5, 6, 7, 8, 9], 5)  # 10C5 경우의 수 -> 252 가지
@@ -262,6 +268,7 @@ class PlayerInfoClass():
         for idx in range(int(case_cnt / 2)):
             all_case_list.append([ret[idx], ret[case_cnt - 1 - idx]])
         ######################################################################################
+        print("[kb.test] play_info : " + str(self.player_info) + "\n")
 
         group_list = []
         div_list = []
@@ -278,31 +285,35 @@ class PlayerInfoClass():
             # list(g) : 2차 list 중복 제거 - tuple 로 바뀌어 있어 list 로 변환해야함
             tmp_list = except_group_case(tmp_list, list(g))  # 주의
 
-        print("[kb.test] Group 제거 후: " + str(tmp_list))
         div_list = list(set(list(map(tuple, div_list))))  # 2차 list 중복 제거 - 문제점: 안에 항목이 tuple 로 바뀜.
         for d in div_list:
             # list(d) : 2차 list 중복 제거 - tuple 로 바뀌어 있어 list 로 변환해야함
             tmp_list = except_division_case(tmp_list, list(d))  # 주의
 
-        print("[kb.test] div 제거 후: " + str(tmp_list))
+        # print("[kb.test] 최종: " + str(tmp_list))
         left_case_cnt = len(tmp_list)
-
-        print(left_case_cnt)
-
         ######################################################################################
 
         if left_case_cnt > 0:
-            print("경우의 수가 존재!")
             mmr_diff = []
             for case in tmp_list:  # case : [ A팀 idx list, B팀 idx list]
                 # 두 팀의 mmr 차이 절대값 (반올림)
-                mmr_diff.append(round(abs(self.calc_team_mmr(case[0]) - self.calc_team_mmr(case[1]))))
+                mmr_diff.append(round(abs(self.calc_team_mmr(case[0]) - self.calc_team_mmr(case[1])), 2))
 
             final_idx = mmr_diff.index(min(mmr_diff))
-            print(final_idx)
-            print("최종 팀 : " + str((tmp_list[final_idx])) + "A팀 합계 :" + str(self.calc_team_mmr(tmp_list[final_idx][0])) +
-                  "B팀 합계 :" + str(self.calc_team_mmr(tmp_list[final_idx][1])) + "  mmr 차이 :  " + str(min(mmr_diff)))
+
+            if self.calc_team_mmr(tmp_list[final_idx][0]) > self.calc_team_mmr(tmp_list[final_idx][1]):
+                first_team_idx, second_team_idx = 1, 0
+            else:
+                first_team_idx, second_team_idx = 0, 1
+
+            self.team_info.append(tmp_list[final_idx][first_team_idx])
+            self.team_info.append(self.calc_team_mmr(tmp_list[final_idx][first_team_idx]))
+            self.team_info.append(tmp_list[final_idx][second_team_idx])
+            self.team_info.append(self.calc_team_mmr(tmp_list[final_idx][second_team_idx]))
+
             return PLAYER_INFO_TEAM_BUILD_SUCCESS
+
         else:
             print("팀이 짜기 실패!!")
             return PLAYER_INFO_ERROR_TEAM_BUILD_FAIL
@@ -310,7 +321,16 @@ class PlayerInfoClass():
     def calc_team_mmr(self, team_list):
         ret = 0
         for ele in team_list:
-            ret += double(self.player_info[ele][7])  # 연계 (mmr)
+            # print("[kb.test] elem: " + str(ele))
+            # print("[kb.test] nickname: " + str(self.player_info[ele][1]))
+            # print("[kb.test] mmr: " + str(self.player_info[ele][3]))
+
+            if self.player_info[ele][3] == "":
+                ret += 1000 # 주의 (예외처리)
+            else:
+                # kb.todo 여기서 에러 많이남.. 예외처리 확인 필요
+                # kb.todo  mmr 애초에 받아올때 실수화 하던지.. 고민해보자
+                ret += (float(self.player_info[ele][3]))  # 연계 (mmr)
         return ret
 
     def gen_comb(self, arr, n):
@@ -326,3 +346,8 @@ class PlayerInfoClass():
                 result.append([elem] + C)
 
         return result
+
+    def get_team_info(self):
+        return self.team_info
+
+

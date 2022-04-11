@@ -1,13 +1,14 @@
+import os
 import sys
 
 from PyQt5 import uic
 from PyQt5.QtCore import Qt, QTimer
-from PyQt5.QtGui import QDoubleValidator
+from PyQt5.QtGui import QDoubleValidator, QIcon
 from PyQt5.QtWidgets import QWidget
 
 # kb.todo next path 설정
-relative_path = "./"
-form_class = uic.loadUiType(relative_path + "img/ui/soldier_window.ui")[0]
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+form_class = uic.loadUiType(BASE_DIR + '/img/ui/soldier_window.ui')[0]
 
 MIN_MMR_VALUE = 600
 MAX_MMR_VALUE = 2000
@@ -29,6 +30,8 @@ MMR_LIST = [{'tier': "다이아", 'mmr': DIAMOND_MMR_VALUE}
 ALERT_MSG_TYPE_NORMAL = 0
 ALERT_MSG_TIMEOUT_NORMAL = 3000
 
+img_path = './img'
+
 
 # worker_info 와 동일한 구조로 soldier_info 를 만든다
 # (excel.py 의 worker_info 양식이 변경 되면 같이 수정 필요)
@@ -37,7 +40,7 @@ def make_soldier_info(nickname, mmr):
 
     soldier_info[1] = nickname
     soldier_info[2] = nickname
-    soldier_info[7] = mmr
+    soldier_info[3] = mmr # 연계
 
     return soldier_info
 
@@ -73,6 +76,8 @@ class SoldierWindow(QWidget, form_class):
         # kb.todo next] exec_() main window 에서 대기 타고 싶은데 안됨.. 뭐가 문제인지 확인해보자
         self.main_window = parent
         self.setWindowTitle("용병 추가")
+        self.setWindowIcon(QIcon(BASE_DIR + '/img/add_soldier.png'))
+
         # windowModality 설정을 NonModal -> ApplicationModal 으로 설정하여 해당 창을 종료 전까지 다른 창 사용 못하게 설정
         self.setWindowModality(Qt.ApplicationModal)
 
