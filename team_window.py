@@ -1,13 +1,13 @@
-# kb.todo next path 설정
-import os
-
 from PyQt5 import uic
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QDialog
+from main import resource_path
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-form_class = uic.loadUiType(BASE_DIR + '/img/ui/team_window.ui')[0]
+UI_FILE_NAME = 'team_window.ui'
+
+PATH = resource_path(UI_FILE_NAME, '/img/ui/')
+form_class = uic.loadUiType(PATH)[0]
 
 
 class TeamWindow(QDialog, form_class):
@@ -15,7 +15,7 @@ class TeamWindow(QDialog, form_class):
         super().__init__()
         self.setupUi(self)
         self.setWindowTitle("팀 결과")
-        self.setWindowIcon(QIcon(BASE_DIR + '/img/team.png'))
+        # self.setWindowIcon(QIcon(BASE_DIR + '/img/team.png'))
 
         # windowModality 설정을 NonModal -> ApplicationModal 으로 설정하여 해당 창을 종료 전까지 다른 창 사용 못하게 설정
         self.setWindowModality(Qt.ApplicationModal)

@@ -1,5 +1,5 @@
 import excel
-import window
+import main_window
 
 
 class WorkerInfo():

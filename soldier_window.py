@@ -1,14 +1,15 @@
 import os
 import sys
-
 from PyQt5 import uic
 from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtGui import QDoubleValidator, QIcon
 from PyQt5.QtWidgets import QWidget
+from main import resource_path
 
-# kb.todo next path 설정
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-form_class = uic.loadUiType(BASE_DIR + '/img/ui/soldier_window.ui')[0]
+UI_FILE_NAME = 'soldier_window.ui'
+
+PATH = resource_path(UI_FILE_NAME, '/img/ui/')
+form_class = uic.loadUiType(PATH)[0]
 
 MIN_MMR_VALUE = 600
 MAX_MMR_VALUE = 2000
@@ -21,7 +22,7 @@ BRONZE_MMR_VALUE = 750
 IRON_MMR_VALUE = 600
 
 MMR_LIST = [{'tier': "다이아", 'mmr': DIAMOND_MMR_VALUE}
-    , {'tier': "플레티넘", 'mmr': PLATINUM_MMR_VALUE}
+    , {'tier': "플래티넘", 'mmr': PLATINUM_MMR_VALUE}
     , {'tier': "골드", 'mmr': GOLD_MMR_VALUE}
     , {'tier': "실버", 'mmr': SILVER_MMR_VALUE}
     , {'tier': "브론즈", 'mmr': BRONZE_MMR_VALUE}
@@ -29,8 +30,6 @@ MMR_LIST = [{'tier': "다이아", 'mmr': DIAMOND_MMR_VALUE}
 
 ALERT_MSG_TYPE_NORMAL = 0
 ALERT_MSG_TIMEOUT_NORMAL = 3000
-
-img_path = './img'
 
 
 # worker_info 와 동일한 구조로 soldier_info 를 만든다
@@ -40,7 +39,7 @@ def make_soldier_info(nickname, mmr):
 
     soldier_info[1] = nickname
     soldier_info[2] = nickname
-    soldier_info[3] = mmr # 연계
+    soldier_info[3] = mmr  # 연계
 
     return soldier_info
 
@@ -76,7 +75,7 @@ class SoldierWindow(QWidget, form_class):
         # kb.todo next] exec_() main window 에서 대기 타고 싶은데 안됨.. 뭐가 문제인지 확인해보자
         self.main_window = parent
         self.setWindowTitle("용병 추가")
-        self.setWindowIcon(QIcon(BASE_DIR + '/img/add_soldier.png'))
+        # self.setWindowIcon(QIcon(BASE_DIR + '/img/add_soldier.png'))
 
         # windowModality 설정을 NonModal -> ApplicationModal 으로 설정하여 해당 창을 종료 전까지 다른 창 사용 못하게 설정
         self.setWindowModality(Qt.ApplicationModal)

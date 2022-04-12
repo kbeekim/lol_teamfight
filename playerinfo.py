@@ -273,7 +273,7 @@ class PlayerInfoClass():
         group_list = []
         div_list = []
         for i in range(MAX_PLAYER_CNT):
-            if self.player_type[i][0] == PLAYER_FLAG_GROUP:  # 주의 # kb.todo 확인
+            if self.player_type[i][0] == PLAYER_FLAG_GROUP:  # 주의
                 group_list.append(self.get_same_flag_player_list(i, True))
             elif self.player_type[i][0] == PLAYER_FLAG_DIVISION:  # 주의
                 div_list.append(self.get_same_flag_player_list(i, True))
