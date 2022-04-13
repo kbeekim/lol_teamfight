@@ -49,6 +49,7 @@ class TeamWindow(QDialog, form_class):
         str_2 = f'2팀: 평균[{teamB_mmr}] {self.player_info[teamB_list[0]][2]} {self.player_info[teamB_list[1]][2]} {self.player_info[teamB_list[2]][2]} {self.player_info[teamB_list[3]][2]} {self.player_info[teamB_list[4]][2]}'
 
         self.team_edit.setText(str_1 + "\n" + str_2)
+        print(str_1 + "\n" + str_2)
 
     def clicked_ok_btn(self):
         self.close()

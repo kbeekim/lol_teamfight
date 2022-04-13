@@ -69,7 +69,7 @@ class PlayerInfoClass():
         #     [Flag / Number / cnt ]
         # ex) [Group / 1 / 3 ] : 3명이 동시에 그룹 투입이 되어서 온 그룹1 인 참여자
         self.player_type = [None] * MAX_PLAYER_CNT
-        
+
         # [A팀 idx, A팀 mmr 합, B팀 idx, B팀 mmr 합]
         self.team_info = []
 
@@ -258,7 +258,7 @@ class PlayerInfoClass():
         else:
             return self.normal_number
 
-    def build_player_team(self):
+    def build_team_after(self):
         all_case_list = []
         # ret = list(itertools.combinations(tmp, 5))
         ret = self.gen_comb([0, 1, 2, 3, 4, 5, 6, 7, 8, 9], 5)  # 10C5 경우의 수 -> 252 가지
@@ -268,7 +268,7 @@ class PlayerInfoClass():
         for idx in range(int(case_cnt / 2)):
             all_case_list.append([ret[idx], ret[case_cnt - 1 - idx]])
         ######################################################################################
-        print("[kb.test] play_info : " + str(self.player_info) + "\n")
+        # print("[kb.test] play_info : " + str(self.player_info) + "\n")
 
         group_list = []
         div_list = []
@@ -318,6 +318,40 @@ class PlayerInfoClass():
             print("팀이 짜기 실패!!")
             return PLAYER_INFO_ERROR_TEAM_BUILD_FAIL
 
+    def build_team_before(self):
+        # 기존팀 짜기와 얼마나 달라지는지 확인용 임시 테스트 함수
+        mmr_list = []
+        teamA_list = []
+        teamB_list = []
+        teamA_mmr = 0
+        teamB_mmr = 0
+
+        for i in range(MAX_PLAYER_CNT):
+            mmr_list.append([i, float(self.player_info[i][3])])  # 연계
+
+        mmr_list.sort(key=lambda x: x[1])
+
+        for idx, mlist in enumerate(mmr_list):
+            if (idx == 0) | (idx == 2) | (idx == 5) | (idx == 7) | (idx == 9):
+                teamA_list.append([self.player_info[mlist[0]][2], mlist[1]])  # 연계
+                teamA_mmr += mlist[1]
+
+            elif (idx == 1) | (idx == 3) | (idx == 4) | (idx == 6) | (idx == 8):
+                teamB_list.append([self.player_info[mlist[0]][2], mlist[1]])  # 연계
+                teamB_mmr += mlist[1]
+
+        print("Befor")
+        if teamA_mmr > teamB_mmr:
+            str_1 = f'1팀: 평균[{round(teamB_mmr/5, 1)}] {teamB_list[0][0]} {teamB_list[1][0]} {teamB_list[2][0]} {teamB_list[3][0]} {teamB_list[4][0]}'
+            str_2 = f'2팀: 평균[{round(teamA_mmr/5, 1)}] {teamA_list[0][0]} {teamA_list[1][0]} {teamA_list[2][0]} {teamA_list[3][0]} {teamA_list[4][0]}'
+
+        else:
+            str_1 = f'1팀: 평균[{round(teamA_mmr/5, 1)}] {teamA_list[0][0]} {teamA_list[1][0]} {teamA_list[2][0]} {teamA_list[3][0]} {teamA_list[4][0]}'
+            str_2 = f'2팀: 평균[{round(teamB_mmr/5, 1)}] {teamB_list[0][0]} {teamB_list[1][0]} {teamB_list[2][0]} {teamB_list[3][0]} {teamB_list[4][0]}'
+
+        print(str_1 + "\n" + str_2)
+        print("After")
+
     def calc_team_mmr(self, team_list):
         ret = 0
         for ele in team_list:
@@ -326,7 +360,7 @@ class PlayerInfoClass():
             # print("[kb.test] mmr: " + str(self.player_info[ele][3]))
 
             if self.player_info[ele][3] == "":
-                ret += 1000 # 주의 (예외처리)
+                ret += 1000  # 주의 (예외처리)
             else:
                 # kb.todo 여기서 에러 많이남.. 예외처리 확인 필요
                 # kb.todo  mmr 애초에 받아올때 실수화 하던지.. 고민해보자
@@ -349,5 +383,3 @@ class PlayerInfoClass():
 
     def get_team_info(self):
         return self.team_info
-
-

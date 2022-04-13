@@ -156,10 +156,13 @@ class WindowClass(QMainWindow, form_class):
         self.refresh_worker_list()
 
     def clicked_make_team_btn(self):
+
         if not self.pl.get_player_cnt() == MAX_PLAYER_CNT:
             self.show_message("모든 정원이 차지 않았습니다.", STATUS_BAR_TYPE_WARN, STATUS_BAR_TIMEOUT_WARN_SHORT)
             return
-        ret = self.pl.build_player_team()
+        ret = self.pl.build_team_after()
+        self.pl.build_team_before()
+
 
         if ret == PLAYER_INFO_TEAM_BUILD_SUCCESS:
             self.show_message("성공!!!", STATUS_BAR_TYPE_WARN, STATUS_BAR_TIMEOUT_WARN_SHORT)
