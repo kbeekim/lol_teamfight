@@ -3,6 +3,8 @@ import sys
 from PyQt5.QtWidgets import QApplication, QWidget
 import main_window
 
+DEFINE_DEBUG_MODE = True
+
 
 def resource_path(file_name, detail_path):
     if hasattr(sys, '_MEIPASS'):

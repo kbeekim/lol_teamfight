@@ -1,6 +1,7 @@
 from numpy import double
 
 import team_window
+from main import DEFINE_DEBUG_MODE
 
 MAX_PLAYER_CNT = 10
 MAX_TEAM_MEMBER = 5
@@ -110,7 +111,7 @@ class PlayerInfoClass():
                 return PLAYER_INFO_ERROR_DIV_MORE_THEN_2
 
         elif flag == PLAYER_FLAG_SOLDIER:
-            if self.is_player_already_in(worker_info_list[0][1]):  # 용병 이름 연계
+            if self.is_player_already_in(worker_info_list[0]['NICKNAME']):  # 용병 이름 연계
                 return PLAYER_INFO_ERROR_SAME_NAME
         # 예외처리 부분===================================================
 
@@ -129,6 +130,7 @@ class PlayerInfoClass():
                 if self.is_empty_player_info(idx):
                     self.player_info[idx] = worker_info_list[worker_idx]
                     self.player_type[idx] = [flag, number, worker_cnt]
+
                     ret_idx_list.append(idx)
                     break
 
@@ -231,7 +233,7 @@ class PlayerInfoClass():
         # worker_info 와 연계
         for idx in range(len(self.player_info)):
             if self.player_info[idx] is not None:  # 주의! None 이면..
-                if self.player_info[idx][1] == in_text:
+                if self.player_info[idx]['NICKNAME'] == in_text:
                     return True
         return False
 
@@ -268,7 +270,8 @@ class PlayerInfoClass():
         for idx in range(int(case_cnt / 2)):
             all_case_list.append([ret[idx], ret[case_cnt - 1 - idx]])
         ######################################################################################
-        # print("[kb.test] play_info : " + str(self.player_info) + "\n")
+        if DEFINE_DEBUG_MODE:
+            print("[kb.test] 이전 play_info : " + str(self.player_info) + "\n")
 
         group_list = []
         div_list = []
@@ -290,15 +293,15 @@ class PlayerInfoClass():
             # list(d) : 2차 list 중복 제거 - tuple 로 바뀌어 있어 list 로 변환해야함
             tmp_list = except_division_case(tmp_list, list(d))  # 주의
 
-        # print("[kb.test] 최종: " + str(tmp_list))
         left_case_cnt = len(tmp_list)
+
         ######################################################################################
 
         if left_case_cnt > 0:
             mmr_diff = []
             for case in tmp_list:  # case : [ A팀 idx list, B팀 idx list]
-                # 두 팀의 mmr 차이 절대값 (반올림)
-                mmr_diff.append(round(abs(self.calc_team_mmr(case[0]) - self.calc_team_mmr(case[1])), 2))
+                # 두 팀의 mmr 차이 절대값
+                mmr_diff.append(abs(self.calc_team_mmr(case[0]) - self.calc_team_mmr(case[1])))
 
             final_idx = mmr_diff.index(min(mmr_diff))
 
@@ -315,7 +318,6 @@ class PlayerInfoClass():
             return PLAYER_INFO_TEAM_BUILD_SUCCESS
 
         else:
-            print("팀이 짜기 실패!!")
             return PLAYER_INFO_ERROR_TEAM_BUILD_FAIL
 
     def build_team_before(self):
@@ -327,45 +329,36 @@ class PlayerInfoClass():
         teamB_mmr = 0
 
         for i in range(MAX_PLAYER_CNT):
-            mmr_list.append([i, float(self.player_info[i][3])])  # 연계
+            mmr_list.append([i, float(self.player_info[i]['MMR'])])  # MMR 연계
 
         mmr_list.sort(key=lambda x: x[1])
 
         for idx, mlist in enumerate(mmr_list):
             if (idx == 0) | (idx == 2) | (idx == 5) | (idx == 7) | (idx == 9):
-                teamA_list.append([self.player_info[mlist[0]][2], mlist[1]])  # 연계
+                teamA_list.append([self.player_info[mlist[0]]['SHORTNICK'], mlist[1]])  # 줄임말 연계
                 teamA_mmr += mlist[1]
 
             elif (idx == 1) | (idx == 3) | (idx == 4) | (idx == 6) | (idx == 8):
-                teamB_list.append([self.player_info[mlist[0]][2], mlist[1]])  # 연계
+                teamB_list.append([self.player_info[mlist[0]]['SHORTNICK'], mlist[1]])  # 줄임말 연계
                 teamB_mmr += mlist[1]
 
-        print("Befor")
+        print("Before")
         if teamA_mmr > teamB_mmr:
             str_1 = f'1팀: 평균[{round(teamB_mmr/5, 1)}] {teamB_list[0][0]} {teamB_list[1][0]} {teamB_list[2][0]} {teamB_list[3][0]} {teamB_list[4][0]}'
             str_2 = f'2팀: 평균[{round(teamA_mmr/5, 1)}] {teamA_list[0][0]} {teamA_list[1][0]} {teamA_list[2][0]} {teamA_list[3][0]} {teamA_list[4][0]}'
-
         else:
             str_1 = f'1팀: 평균[{round(teamA_mmr/5, 1)}] {teamA_list[0][0]} {teamA_list[1][0]} {teamA_list[2][0]} {teamA_list[3][0]} {teamA_list[4][0]}'
             str_2 = f'2팀: 평균[{round(teamB_mmr/5, 1)}] {teamB_list[0][0]} {teamB_list[1][0]} {teamB_list[2][0]} {teamB_list[3][0]} {teamB_list[4][0]}'
 
         print(str_1 + "\n" + str_2)
-        print("After")
 
     def calc_team_mmr(self, team_list):
         ret = 0
         for ele in team_list:
-            # print("[kb.test] elem: " + str(ele))
-            # print("[kb.test] nickname: " + str(self.player_info[ele][1]))
-            # print("[kb.test] mmr: " + str(self.player_info[ele][3]))
+            # kb.check 여기서 에러 많이남.. 예외처리 하였어도.. 오류난다면 확인해보자
+            ret += (self.player_info[ele]['MMR'])  # mmr 연계
 
-            if self.player_info[ele][3] == "":
-                ret += 1000  # 주의 (예외처리)
-            else:
-                # kb.todo 여기서 에러 많이남.. 예외처리 확인 필요
-                # kb.todo  mmr 애초에 받아올때 실수화 하던지.. 고민해보자
-                ret += (float(self.player_info[ele][3]))  # 연계 (mmr)
-        return ret
+        return round(ret, 2)
 
     def gen_comb(self, arr, n):
         result = []

@@ -11,6 +11,7 @@ import excel
 import soldier_window
 from playerinfo import *
 from main import resource_path
+from main import DEFINE_DEBUG_MODE
 
 STATUS_BAR_TIMEOUT_DEFAULT = 2000
 STATUS_BAR_TIMEOUT_SHORT = 1000
@@ -160,9 +161,9 @@ class WindowClass(QMainWindow, form_class):
         if not self.pl.get_player_cnt() == MAX_PLAYER_CNT:
             self.show_message("모든 정원이 차지 않았습니다.", STATUS_BAR_TYPE_WARN, STATUS_BAR_TIMEOUT_WARN_SHORT)
             return
-        ret = self.pl.build_team_after()
-        self.pl.build_team_before()
 
+        self.pl.build_team_before()
+        ret = self.pl.build_team_after()
 
         if ret == PLAYER_INFO_TEAM_BUILD_SUCCESS:
             self.show_message("성공!!!", STATUS_BAR_TYPE_WARN, STATUS_BAR_TIMEOUT_WARN_SHORT)
@@ -227,13 +228,13 @@ class WindowClass(QMainWindow, form_class):
         worker_info_list = []
         for i in range(len(workers)):
             worker_info_list.append(excel_data.get_worker_info_by_nickname(workers[i].text()))
-
         ret = self.pl.set_player_info(worker_info_list, player_flag)
+
         if isinstance(ret, list):
             player_idx_list = ret
             # return 값으로 player_list 의 idx를 받아 온다.
             for i, player_idx in enumerate(player_idx_list):
-                worker_name = worker_info_list[i][1]  # 연계
+                worker_name = worker_info_list[i]['NICKNAME']  # 연계
 
                 if player_flag == PLAYER_FLAG_GROUP:
                     # tmp = f'{worker_name}\n(그룹)'
@@ -247,7 +248,6 @@ class WindowClass(QMainWindow, form_class):
             # 성공했으니 list 비활성화
             for i in range(len(workers)):
                 workers[i].setFlags(Qt.NoItemFlags)
-
             self.refresh_player_cnt()
         elif isinstance(ret, int):
             self.check_error_code_to_msg(ret)
@@ -257,9 +257,10 @@ class WindowClass(QMainWindow, form_class):
 
     def insert_soldier_to_player(self, soldier_info, tier):
         soldier_info_list = []
-        soldier_name = soldier_info[1]  # 연계
+        soldier_name = soldier_info['NICKNAME']  # 연계
         soldier_info_list.append(soldier_info)
         # return 값으로 player_list 의 idx를 받아 온다.
+
         ret = self.pl.set_player_info(soldier_info_list, PLAYER_FLAG_SOLDIER)
 
         if isinstance(ret, list): # 성공한 경우
@@ -267,7 +268,6 @@ class WindowClass(QMainWindow, form_class):
             if player_idx_list:
                 player_idx = player_idx_list[0]  # 용병은 1명 추가이므로
                 self.set_style_player_btn(player_idx, f'{soldier_name}\n({tier})', PLAYER_FLAG_SOLDIER)
-
             self.refresh_player_cnt()
             # soldier window 로 결과값 전송
             return self.SOLDIER_INFO_SUCCESS

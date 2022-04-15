@@ -5,6 +5,7 @@ from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtGui import QDoubleValidator, QIcon
 from PyQt5.QtWidgets import QWidget
 from main import resource_path
+from main import DEFINE_DEBUG_MODE
 
 UI_FILE_NAME = 'soldier_window.ui'
 
@@ -34,12 +35,12 @@ ALERT_MSG_TIMEOUT_NORMAL = 3000
 
 # worker_info 와 동일한 구조로 soldier_info 를 만든다
 # (excel.py 의 worker_info 양식이 변경 되면 같이 수정 필요)
-def make_soldier_info(nickname, mmr):
-    soldier_info = [None] * 13
+def make_soldier_info(nickname, mmr_str):
+    soldier_info = {'NUM': 99, 'NICKNAME': nickname, 'SHORTNICK': nickname, 'MMR' : float(mmr_str), 'ENTRY': 0}
 
-    soldier_info[1] = nickname
-    soldier_info[2] = nickname
-    soldier_info[3] = mmr  # 연계
+    # soldier_info[1] = nickname
+    # soldier_info[2] = nickname
+    # soldier_info[3] = mmr_str  # 연계
 
     return soldier_info
 
@@ -151,19 +152,19 @@ class SoldierWindow(QWidget, form_class):
             elif not check_valid_mmr(mmr_str):
                 self.show_alert_message("우리집 고양이가 mmr을 입력했나보군요 ()", ALERT_MSG_TYPE_NORMAL)
                 return
-            mmr = int(mmr_str)
             tier = calc_mmr2tier(mmr_str)
+
         else:  # mmr 자동 입력이라면
             idx = self.mmr_combo_box.currentIndex()
             tier = self.mmr_combo_box.currentText()
             if idx == -1:
                 self.show_alert_message("mmr 칸이 쓸쓸해 보이네요", ALERT_MSG_TYPE_NORMAL)
                 return
-            mmr = MMR_LIST[idx]['mmr']
+            mmr_str = str(MMR_LIST[idx]['mmr'])
             tier = MMR_LIST[idx]['tier']
 
         # main_window 와 연계됨.
-        ret = self.main_window.insert_soldier_to_player(make_soldier_info(nickname, mmr), tier)
+        ret = self.main_window.insert_soldier_to_player(make_soldier_info(nickname, mmr_str), tier)
 
         if ret == self.main_window.SOLDIER_INFO_SUCCESS:
             self.close_soldier_window()

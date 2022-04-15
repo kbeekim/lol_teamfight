@@ -3,6 +3,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QDialog
 from main import resource_path
+from main import DEFINE_DEBUG_MODE
 
 UI_FILE_NAME = 'team_window.ui'
 
@@ -22,34 +23,52 @@ class TeamWindow(QDialog, form_class):
 
         self.team_info = team_info
         self.player_info = player_info
+        self.teamA_btn_list = [self.teamA_1_btn, self.teamA_2_btn, self.teamA_3_btn, self.teamA_4_btn, self.teamA_5_btn]
+        self.teamB_btn_list = [self.teamB_1_btn, self.teamB_2_btn, self.teamB_3_btn, self.teamB_4_btn, self.teamB_5_btn]
 
         self.set_text_ui()
         self.ok_btn.clicked.connect(self.clicked_ok_btn)
 
     def set_text_ui(self):
         teamA_list = self.team_info[0]
-        teamA_mmr = round(self.team_info[1]/5, 1)
+        teamA_mmr = round(self.team_info[1] / 5, 1)
         teamB_list = self.team_info[2]
-        teamB_mmr = round(self.team_info[3]/5, 1)
+        teamB_mmr = round(self.team_info[3] / 5, 1)
 
-        # kb.todo mmr 끝에 space 가 있어보임
-        self.teamA_1_btn.setText(self.player_info[teamA_list[0]][1] + "\n( " + self.player_info[teamA_list[0]][3] + ")")
-        self.teamA_2_btn.setText(self.player_info[teamA_list[1]][1] + "\n( " + self.player_info[teamA_list[1]][3] + ")")
-        self.teamA_3_btn.setText(self.player_info[teamA_list[2]][1] + "\n( " + self.player_info[teamA_list[2]][3] + ")")
-        self.teamA_4_btn.setText(self.player_info[teamA_list[3]][1] + "\n( " + self.player_info[teamA_list[3]][3] + ")")
-        self.teamA_5_btn.setText(self.player_info[teamA_list[4]][1] + "\n( " + self.player_info[teamA_list[4]][3] + ")")
+        if DEFINE_DEBUG_MODE:
+            print(f"1팀: 평균[{teamA_mmr}] / 합계[{self.team_info[1]}]")
+            for i in teamA_list:
+                print(f"1팀: [{self.get_short_nick(i)}] / {str(self.get_mmr(i))}")
 
-        self.teamB_1_btn.setText(self.player_info[teamB_list[0]][1] + "\n( " + self.player_info[teamB_list[0]][3] + ")")
-        self.teamB_2_btn.setText(self.player_info[teamB_list[1]][1] + "\n( " + self.player_info[teamB_list[1]][3] + ")")
-        self.teamB_3_btn.setText(self.player_info[teamB_list[2]][1] + "\n( " + self.player_info[teamB_list[2]][3] + ")")
-        self.teamB_4_btn.setText(self.player_info[teamB_list[3]][1] + "\n( " + self.player_info[teamB_list[3]][3] + ")")
-        self.teamB_5_btn.setText(self.player_info[teamB_list[4]][1] + "\n( " + self.player_info[teamB_list[4]][3] + ")")
+            print(f"2팀: 평균[{teamB_mmr}]/합계[{self.team_info[3]}]")
+            for i in teamB_list:
+                print(f"2팀: [{self.get_short_nick(i)}] / {str(self.get_mmr(i))}")
 
-        str_1 = f'1팀: 평균[{teamA_mmr}] {self.player_info[teamA_list[0]][2]} {self.player_info[teamA_list[1]][2]} {self.player_info[teamA_list[2]][2]} {self.player_info[teamA_list[3]][2]} {self.player_info[teamA_list[4]][2]}'
-        str_2 = f'2팀: 평균[{teamB_mmr}] {self.player_info[teamB_list[0]][2]} {self.player_info[teamB_list[1]][2]} {self.player_info[teamB_list[2]][2]} {self.player_info[teamB_list[3]][2]} {self.player_info[teamB_list[4]][2]}'
+            print(
+                f"두 팀 차이: 평균[{round(abs(teamA_mmr - teamB_mmr), 1)}]/합계[{round(abs(self.team_info[3] - self.team_info[1]), 1)}] \n")
+
+        for idx, btn in enumerate(self.teamA_btn_list):
+            btn.setText(self.get_nickname(teamA_list[idx]) + "\n(" + str(self.get_mmr(teamA_list[idx])) + ")")
+        for idx, btn in enumerate(self.teamB_btn_list):
+            btn.setText(self.get_nickname(teamB_list[idx]) + "\n(" + str(self.get_mmr(teamB_list[idx])) + ")")
+
+        str_1 = f"1팀: {self.get_short_nick(teamA_list[0])} {self.get_short_nick(teamA_list[1])} " \
+                f"{self.get_short_nick(teamA_list[2])} {self.get_short_nick(teamA_list[3])} {self.get_short_nick(teamA_list[4])}"
+        str_2 = f"2팀: {self.get_short_nick(teamB_list[0])} {self.get_short_nick(teamB_list[1])} " \
+                f"{self.get_short_nick(teamB_list[2])} {self.get_short_nick(teamB_list[3])} {self.get_short_nick(teamB_list[4])} "
 
         self.team_edit.setText(str_1 + "\n" + str_2)
+        print("===Result===")
         print(str_1 + "\n" + str_2)
 
     def clicked_ok_btn(self):
         self.close()
+
+    def get_nickname(self, idx):
+        return self.player_info[idx]['NICKNAME']
+
+    def get_short_nick(self, idx):
+        return self.player_info[idx]['SHORTNICK']
+
+    def get_mmr(self, idx):
+        return self.player_info[idx]['MMR']
