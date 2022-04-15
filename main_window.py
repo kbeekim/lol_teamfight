@@ -125,7 +125,7 @@ class WindowClass(QMainWindow, form_class):
 
     def clicked_load_btn(self):
         # kb.todo 현재 선택된 닉네임 기억 -> 초기화 후 해당 닉네임으로 worker_list_widget 에서 찾아 설정
-        tmp_player_list = self.pl.get_all_player_info()
+        # tmp_player_list = self.pl.
 
         self.clicked_clear_btn()
         excel_data.read_gspread()

@@ -150,7 +150,7 @@ class SoldierWindow(QWidget, form_class):
                 self.show_alert_message("아이언도 mmr은 있답니다.", ALERT_MSG_TYPE_NORMAL)
                 return
             elif not check_valid_mmr(mmr_str):
-                self.show_alert_message("우리집 고양이가 mmr을 입력했나보군요 ()", ALERT_MSG_TYPE_NORMAL)
+                self.show_alert_message("우리집 고양이가 mmr을 입력했나보군요!", ALERT_MSG_TYPE_NORMAL)
                 return
             tier = calc_mmr2tier(mmr_str)
 
