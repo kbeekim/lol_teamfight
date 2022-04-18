@@ -36,16 +36,25 @@ class TeamWindow(QDialog, form_class):
         teamB_mmr = round(self.team_info[3] / 5, 1)
 
         if DEFINE_DEBUG_MODE:
-            print(f"1팀: 평균[{teamA_mmr}] / 합계[{self.team_info[1]}]")
+            print(f"1팀: 합계[{self.team_info[1]}]")
+            log_str = f"1팀: 합계[{self.team_info[1]}]\n"
+
             for i in teamA_list:
                 print(f"1팀: [{self.get_short_nick(i)}] / {str(self.get_mmr(i))}")
+                log_str += f"1팀: [{self.get_short_nick(i)}] / {str(self.get_mmr(i))}\n"
 
-            print(f"2팀: 평균[{teamB_mmr}]/합계[{self.team_info[3]}]")
+            print(f"\n2팀: 합계[{self.team_info[3]}]")
+            log_str += f"\n2팀: 합계[{self.team_info[3]}]\n"
+
             for i in teamB_list:
                 print(f"2팀: [{self.get_short_nick(i)}] / {str(self.get_mmr(i))}")
+                log_str += f"2팀: [{self.get_short_nick(i)}] / {str(self.get_mmr(i))}\n"
 
             print(
-                f"두 팀 차이: 평균[{round(abs(teamA_mmr - teamB_mmr), 1)}]/합계[{round(abs(self.team_info[3] - self.team_info[1]), 1)}] \n")
+                f"두 팀 차이: 합계[{round(abs(self.team_info[3] - self.team_info[1]), 1)}] \n")
+            log_str += f"두 팀 차이: 합계[{round(abs(self.team_info[3] - self.team_info[1]), 1)}]\n"
+
+        self.log_edit.setText(log_str)
 
         for idx, btn in enumerate(self.teamA_btn_list):
             btn.setText(self.get_nickname(teamA_list[idx]) + "\n(" + str(self.get_mmr(teamA_list[idx])) + ")")
@@ -58,7 +67,7 @@ class TeamWindow(QDialog, form_class):
                 f"{self.get_short_nick(teamB_list[2])} {self.get_short_nick(teamB_list[3])} {self.get_short_nick(teamB_list[4])} "
 
         self.team_edit.setText(str_1 + "\n" + str_2)
-        print("===Result===")
+        print("=======결과=======")
         print(str_1 + "\n" + str_2)
 
     def clicked_ok_btn(self):

@@ -87,7 +87,7 @@ class ExcelClass:
             ret = False
 
         mmr_value_list = sh.col_values(4) # 엑셀 4열이 MMR 값
-        print("[kb.test] mmr_value_list :  " + str(mmr_value_list))
+        print("[kb.test] mmr_value_list :  " + str(mmr_value_list) + "\n")
         for idx, mmr in enumerate(mmr_value_list):
             if idx == 0:
                 continue

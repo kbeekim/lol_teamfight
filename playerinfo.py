@@ -265,6 +265,7 @@ class PlayerInfoClass():
         # ret = list(itertools.combinations(tmp, 5))
         ret = self.gen_comb([0, 1, 2, 3, 4, 5, 6, 7, 8, 9], 5)  # 10C5 경우의 수 -> 252 가지
         case_cnt = len(ret)  # 252  가지 경우의 수
+        self.clear_team_info()  # 22.04.18) team_info 를 초기화 안하여 기존 team idx 를 유지하는 오류가 있었음..
 
         #  all_case_list [[TeamA_idx_list_1, TeamB_idx_list_1], [TeamA_idx_list_2, TeamB_idx_list_2],...] 126 가지 경우의 수
         for idx in range(int(case_cnt / 2)):
@@ -344,11 +345,11 @@ class PlayerInfoClass():
 
         print("Before")
         if teamA_mmr > teamB_mmr:
-            str_1 = f'1팀: 평균[{round(teamB_mmr/5, 1)}] {teamB_list[0][0]} {teamB_list[1][0]} {teamB_list[2][0]} {teamB_list[3][0]} {teamB_list[4][0]}'
-            str_2 = f'2팀: 평균[{round(teamA_mmr/5, 1)}] {teamA_list[0][0]} {teamA_list[1][0]} {teamA_list[2][0]} {teamA_list[3][0]} {teamA_list[4][0]}'
+            str_1 = f'1팀: 평균[{round(teamB_mmr / 5, 1)}] {teamB_list[0][0]} {teamB_list[1][0]} {teamB_list[2][0]} {teamB_list[3][0]} {teamB_list[4][0]}'
+            str_2 = f'2팀: 평균[{round(teamA_mmr / 5, 1)}] {teamA_list[0][0]} {teamA_list[1][0]} {teamA_list[2][0]} {teamA_list[3][0]} {teamA_list[4][0]}'
         else:
-            str_1 = f'1팀: 평균[{round(teamA_mmr/5, 1)}] {teamA_list[0][0]} {teamA_list[1][0]} {teamA_list[2][0]} {teamA_list[3][0]} {teamA_list[4][0]}'
-            str_2 = f'2팀: 평균[{round(teamB_mmr/5, 1)}] {teamB_list[0][0]} {teamB_list[1][0]} {teamB_list[2][0]} {teamB_list[3][0]} {teamB_list[4][0]}'
+            str_1 = f'1팀: 평균[{round(teamA_mmr / 5, 1)}] {teamA_list[0][0]} {teamA_list[1][0]} {teamA_list[2][0]} {teamA_list[3][0]} {teamA_list[4][0]}'
+            str_2 = f'2팀: 평균[{round(teamB_mmr / 5, 1)}] {teamB_list[0][0]} {teamB_list[1][0]} {teamB_list[2][0]} {teamB_list[3][0]} {teamB_list[4][0]}'
 
         print(str_1 + "\n" + str_2)
 
@@ -376,3 +377,6 @@ class PlayerInfoClass():
 
     def get_team_info(self):
         return self.team_info
+
+    def clear_team_info(self):
+        self.team_info = []

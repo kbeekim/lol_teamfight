@@ -125,11 +125,23 @@ class WindowClass(QMainWindow, form_class):
 
     def clicked_load_btn(self):
         # kb.todo 현재 선택된 닉네임 기억 -> 초기화 후 해당 닉네임으로 worker_list_widget 에서 찾아 설정
-        # tmp_player_list = self.pl.
+        tmp_list = []
+        for dix in self.pl.get_all_player_info():
+            if dix is None:
+                continue
+            tmp_list.append(dix['NICKNAME'])
+
+        if DEFINE_DEBUG_MODE:
+            print("clicked_load_btn : " + str(tmp_list))
 
         self.clicked_clear_btn()
         excel_data.read_gspread()
         self.load_worker_list()
+
+        for tmp_nick in tmp_list:
+            item = self.worker_list_widget.findItems(tmp_nick, Qt.MatchExactly)
+            if len(item) > 0:
+                self.insert_worker_to_player(item, PLAYER_FLAG_NORMAL)
 
     def clicked_search_clear_btn(self):
         self.search_edit.setText("")
@@ -157,7 +169,6 @@ class WindowClass(QMainWindow, form_class):
         self.refresh_worker_list()
 
     def clicked_make_team_btn(self):
-
         if not self.pl.get_player_cnt() == MAX_PLAYER_CNT:
             self.show_message("모든 정원이 차지 않았습니다.", STATUS_BAR_TYPE_WARN, STATUS_BAR_TIMEOUT_WARN_SHORT)
             return
@@ -197,7 +208,7 @@ class WindowClass(QMainWindow, form_class):
 
         # 해당 idx 에 해당하는 player_info 존재한다면 btn text 변환 및 list 초기화
         ret = self.pl.clear_player_info(btn_idx)
-        
+
         if isinstance(ret, list):
             with_idx_list = ret
             if (len(with_idx_list)) != 0: # 같이 지워야 할게 있을 때
@@ -235,15 +246,18 @@ class WindowClass(QMainWindow, form_class):
             # return 값으로 player_list 의 idx를 받아 온다.
             for i, player_idx in enumerate(player_idx_list):
                 worker_name = worker_info_list[i]['NICKNAME']  # 연계
+                tmp = f'{worker_name}\n({worker_info_list[i]["MMR"]})'
 
-                if player_flag == PLAYER_FLAG_GROUP:
+                # kbeekim) 우선 MMR 표시로
+                # if player_flag == PLAYER_FLAG_GROUP:
                     # tmp = f'{worker_name}\n(그룹)'
-                    self.set_style_player_btn(player_idx, worker_name, PLAYER_FLAG_GROUP)
-                elif player_flag == PLAYER_FLAG_DIVISION:
+                    # self.set_style_player_btn(player_idx, tmp, PLAYER_FLAG_GROUP)
+                # elif player_flag == PLAYER_FLAG_DIVISION:
                     # tmp = f'{worker_name}\n(분할)'
-                    self.set_style_player_btn(player_idx, worker_name, PLAYER_FLAG_DIVISION)
-                else:
-                    self.set_style_player_btn(player_idx, worker_name, PLAYER_FLAG_NORMAL)
+                    # self.set_style_player_btn(player_idx, tmp, PLAYER_FLAG_DIVISION)
+                # else:
+                #     self.set_style_player_btn(player_idx, tmp, PLAYER_FLAG_NORMAL)
+                self.set_style_player_btn(player_idx, tmp, player_flag)
 
             # 성공했으니 list 비활성화
             for i in range(len(workers)):
