@@ -22,7 +22,7 @@ STATUS_BAR_TYPE_NORMAL = 0
 STATUS_BAR_TYPE_WARN = 1
 
 MAJOR_VERSION = 0
-MINOR_VERSION = 1
+MINOR_VERSION = 2
 
 UI_FILE_NAME = 'main_window.ui'
 
@@ -124,7 +124,7 @@ class WindowClass(QMainWindow, form_class):
         self.statusBar().setFont(QFont("Noto_Sans", 12))
 
     def clicked_load_btn(self):
-        # kb.todo 현재 선택된 닉네임 기억 -> 초기화 후 해당 닉네임으로 worker_list_widget 에서 찾아 설정
+        # kbeekim) 기존의 그룹/분할은 취소되며 idx 도 변경될 수 있음
         tmp_list = []
         for dix in self.pl.get_all_player_info():
             if dix is None:
@@ -173,13 +173,14 @@ class WindowClass(QMainWindow, form_class):
             self.show_message("모든 정원이 차지 않았습니다.", STATUS_BAR_TYPE_WARN, STATUS_BAR_TIMEOUT_WARN_SHORT)
             return
 
-        self.pl.build_team_before()
+        # kb.todo 임시.
+        str_before = self.pl.build_team_before()
         ret = self.pl.build_team_after()
 
         if ret == PLAYER_INFO_TEAM_BUILD_SUCCESS:
             self.show_message("성공!!!", STATUS_BAR_TYPE_WARN, STATUS_BAR_TIMEOUT_WARN_SHORT)
 
-            self.team = team_window.TeamWindow(self.pl.get_team_info(), self.pl.get_all_player_info())
+            self.team = team_window.TeamWindow(self.pl.get_team_info(), self.pl.get_all_player_info(), str_before)
             self.team.show()
         else:
             self.check_error_code_to_msg(ret)

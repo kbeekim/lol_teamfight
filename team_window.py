@@ -12,7 +12,7 @@ form_class = uic.loadUiType(PATH)[0]
 
 
 class TeamWindow(QDialog, form_class):
-    def __init__(self, team_info, player_info):
+    def __init__(self, team_info, player_info, str_before):
         super().__init__()
         self.setupUi(self)
         self.setWindowTitle("팀 결과")
@@ -25,6 +25,7 @@ class TeamWindow(QDialog, form_class):
         self.player_info = player_info
         self.teamA_btn_list = [self.teamA_1_btn, self.teamA_2_btn, self.teamA_3_btn, self.teamA_4_btn, self.teamA_5_btn]
         self.teamB_btn_list = [self.teamB_1_btn, self.teamB_2_btn, self.teamB_3_btn, self.teamB_4_btn, self.teamB_5_btn]
+        self.str_before = str_before
 
         self.set_text_ui()
         self.ok_btn.clicked.connect(self.clicked_ok_btn)
@@ -34,10 +35,11 @@ class TeamWindow(QDialog, form_class):
         teamA_mmr = round(self.team_info[1] / 5, 1)
         teamB_list = self.team_info[2]
         teamB_mmr = round(self.team_info[3] / 5, 1)
+        log_str = "\n>>> 새로운 방식 (After)\n"
 
         if DEFINE_DEBUG_MODE:
             print(f"1팀: 합계[{self.team_info[1]}]")
-            log_str = f"1팀: 합계[{self.team_info[1]}]\n"
+            log_str += f"1팀: 합계[{self.team_info[1]}]\n"
 
             for i in teamA_list:
                 print(f"1팀: [{self.get_short_nick(i)}] / {str(self.get_mmr(i))}")
@@ -54,7 +56,7 @@ class TeamWindow(QDialog, form_class):
                 f"두 팀 차이: 합계[{round(abs(self.team_info[3] - self.team_info[1]), 1)}] \n")
             log_str += f"두 팀 차이: 합계[{round(abs(self.team_info[3] - self.team_info[1]), 1)}]\n"
 
-        self.log_edit.setText(log_str)
+        self.log_edit.setText(self.str_before + log_str)
 
         for idx, btn in enumerate(self.teamA_btn_list):
             btn.setText(self.get_nickname(teamA_list[idx]) + "\n(" + str(self.get_mmr(teamA_list[idx])) + ")")
