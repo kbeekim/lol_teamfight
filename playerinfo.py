@@ -26,6 +26,8 @@ PLAYER_INFO_ERROR_TEAM_BUILD_FAIL = -10
 
 
 def is_included_list(base_list, comp_list):
+    """ base_list 안에 comp_list 가 포함되는지 확인하는 함수
+    """
     for i in comp_list:
         if i in base_list:
             continue
@@ -35,6 +37,18 @@ def is_included_list(base_list, comp_list):
 
 
 def except_group_case(input_list, group_list):
+    """ 팀 결성 경우의 수 중, 그룹 조건을 만족하는 경우를 찾는 함수
+    Args:
+        - input_list: 팀 결성 경우의 수에 대한 리스트 (3차 list)
+            ex) [[[0, 1, 2, 3, 4], [5, 6, 7, 8, 9]],   [[0, 1, 2, 3, 5], [4, 6, 7, 8, 9]], ..
+            [[첫번째 경우의 수 A팀,  첫번째 경우의 수 B팀]], [[두번째 경우의 수 A팀,  두번째 경우의 수 B팀]] ..
+            
+        - group_list: 그룹 조건으로 묶인 player idx list
+           ex) [8, 9]  : 8번 9번 참여자는 같은 팀이여야함
+
+    Returns:
+        - input_list 에서 그룹 조건을 제외하고 남은 list
+    """
     ret_list = []
     for i in input_list:
         teamA_list = i[0]
@@ -49,7 +63,19 @@ def except_group_case(input_list, group_list):
 
 
 def except_division_case(input_list, div_list):
+    """ 팀 결성 경우의 수 중, 분할 조건을 만족하는 경우를 찾는 함수
+    Args:
+        - input_list: 팀 결성 경우의 수에 대한 리스트 (3차 list)
+            ex) [[[0, 1, 2, 3, 4], [5, 6, 7, 8, 9]],   [[0, 1, 2, 3, 5], [4, 6, 7, 8, 9]], ..
+              [[첫번째 경우의 수 A팀,  첫번째 경우의 수 B팀]], [[두번째 경우의 수 A팀,  두번째 경우의 수 B팀]] ..
+
+        - div_list: 분할 조건으로 묶인 player idx list
+           ex) [8, 9]  : 8번 9번 참여자는 다른 팀이여야함
+    Returns:
+        - input_list 에서 분할 조건을 제외하고 남은 list
+    """
     ret_list = []
+
     for i in input_list:
         teamA_list = i[0]
         teamB_list = i[1]
@@ -64,7 +90,7 @@ def except_division_case(input_list, div_list):
     return ret_list
 
 
-class PlayerInfoClass():
+class PlayerInfoClass:
     def __init__(self):
         self.player_info = [None] * MAX_PLAYER_CNT
         #     [Flag / Number / cnt ]
@@ -212,12 +238,16 @@ class PlayerInfoClass():
         ret_idx = []
 
         for i in range(MAX_PLAYER_CNT):
-            if self.player_type[i] is not None:  # 주의! None 이면..
-                if i != idx:
-                    if self.player_type[idx][0] == self.player_type[i][0]:
-                        if self.player_type[idx][1] == self.player_type[i][1]:
-                            if self.player_type[idx][2] == self.player_type[i][2]:
-                                ret_idx.append(i)
+            try:
+                if self.player_type[i] is not None:  # 주의! None 이면..
+                    if i != idx:
+                        if self.player_type[idx][0] == self.player_type[i][0]:
+                            if self.player_type[idx][1] == self.player_type[i][1]:
+                                if self.player_type[idx][2] == self.player_type[i][2]:
+                                    ret_idx.append(i)
+            except Exception as e:
+                print("오류 발생 - player_type 확인 필요", e)
+
         if include_self:
             ret_idx.append(idx)
         ret_idx.sort()
@@ -232,9 +262,13 @@ class PlayerInfoClass():
         """
         # worker_info 와 연계
         for idx in range(len(self.player_info)):
-            if self.player_info[idx] is not None:  # 주의! None 이면..
-                if self.player_info[idx]['NICKNAME'] == in_text:
-                    return True
+            try:
+                if self.player_info[idx] is not None:  # 주의! None 이면..
+                    if self.player_info[idx]['NICKNAME'] == in_text:
+                        return True
+            except Exception as e:
+                print("오류 발생 - player_info 확인 필요", e)
+
         return False
 
     def get_player_cnt(self):
@@ -261,11 +295,20 @@ class PlayerInfoClass():
             return self.normal_number
 
     def build_team_after(self):
+        """ mmr 평균 차이가 가장 적도록 팀을 짜는 함수
+
+        1) 10명 중에 5명을 뽑는 경우의 수 252 가지를 만든다. -- ret
+        2) A팀 idx 와 B팀 idx 를 묶어 list 화  -- all_case_list (만들어 질 수 있는 모든 팀의 경우의 수 126가지)
+        3) 그룹/분할 조건에 해당하는 경우의 수 만 남긴다.
+        4) 남은 list 중에 팀별 mmr 값을 합산하여 가장 차이가 적은 경우의 수를 추출한다.
+        5) 해당 팀 정보를 team_info 에 append 한다. -- team_info [1팀 팀원 idx, 1팀 mmr 합계, 2팀 팀원 idx, 2팀 mmr 합계]
+
+        """
         all_case_list = []
         # ret = list(itertools.combinations(tmp, 5))
         ret = self.gen_comb([0, 1, 2, 3, 4, 5, 6, 7, 8, 9], 5)  # 10C5 경우의 수 -> 252 가지
         case_cnt = len(ret)  # 252  가지 경우의 수
-        self.clear_team_info()  # 22.04.18) team_info 를 초기화 안하여 기존 team idx 를 유지하는 오류가 있었음..
+        self.clear_team_info()  # kbeekim team_info 를 초기화 안하여 기존 team idx 를 유지하는 오류가 있었음.. 22.04.18
 
         #  all_case_list [[TeamA_idx_list_1, TeamB_idx_list_1], [TeamA_idx_list_2, TeamB_idx_list_2],...] 126 가지 경우의 수
         for idx in range(int(case_cnt / 2)):
@@ -277,22 +320,25 @@ class PlayerInfoClass():
         group_list = []
         div_list = []
         for i in range(MAX_PLAYER_CNT):
-            if self.player_type[i][0] == PLAYER_FLAG_GROUP:  # 주의
-                group_list.append(self.get_same_flag_player_list(i, True))
-            elif self.player_type[i][0] == PLAYER_FLAG_DIVISION:  # 주의
-                div_list.append(self.get_same_flag_player_list(i, True))
+            try:    # 주의
+                if self.player_type[i][0] == PLAYER_FLAG_GROUP:
+                    group_list.append(self.get_same_flag_player_list(i, True))
+                elif self.player_type[i][0] == PLAYER_FLAG_DIVISION:
+                    div_list.append(self.get_same_flag_player_list(i, True))
+            except Exception as e:
+                print("player_type 확인", e)
 
         group_list = list(set(list(map(tuple, group_list))))  # 2차 list 중복 제거 - 문제점: 안에 항목이 tuple 로 바뀜.
 
         tmp_list = all_case_list
         for g in group_list:
             # list(g) : 2차 list 중복 제거 - tuple 로 바뀌어 있어 list 로 변환해야함
-            tmp_list = except_group_case(tmp_list, list(g))  # 주의
+            tmp_list = except_group_case(tmp_list, list(g))
 
         div_list = list(set(list(map(tuple, div_list))))  # 2차 list 중복 제거 - 문제점: 안에 항목이 tuple 로 바뀜.
         for d in div_list:
             # list(d) : 2차 list 중복 제거 - tuple 로 바뀌어 있어 list 로 변환해야함
-            tmp_list = except_division_case(tmp_list, list(d))  # 주의
+            tmp_list = except_division_case(tmp_list, list(d))
 
         left_case_cnt = len(tmp_list)
 
@@ -380,8 +426,10 @@ class PlayerInfoClass():
     def calc_team_mmr(self, team_list):
         ret = 0
         for ele in team_list:
-            # kb.check 여기서 에러 많이남.. 예외처리 하였어도.. 오류난다면 확인해보자
-            ret += (self.player_info[ele]['MMR'])  # mmr 연계
+            try:    # 주의
+                ret += (self.player_info[ele]['MMR'])  # mmr 연계
+            except Exception as e:
+                print("예외가 발생하였습니다." , e)
 
         return round(ret, 2)
 
