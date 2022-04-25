@@ -392,35 +392,27 @@ class PlayerInfoClass:
         print(teamA_list)
 
         if teamA_mmr > teamB_mmr:
-            str_1 = f'1팀: 합계[{round(teamB_mmr, 1)}]\n' \
-                    f' {teamB_list[0][0]}  {teamB_list[0][1]}  {teamB_list[0][2]}번 \n' \
-                    f' {teamB_list[1][0]}  {teamB_list[1][1]}  {teamB_list[1][2]}번 \n'  \
-                    f' {teamB_list[2][0]}  {teamB_list[2][1]}  {teamB_list[2][2]}번 \n' \
-                    f' {teamB_list[3][0]}  {teamB_list[3][1]}  {teamB_list[3][2]}번 \n' \
-                    f' {teamB_list[4][0]}  {teamB_list[4][1]}  {teamB_list[4][2]}번 \n'
+            str_1 = f'1팀: 합계[{round(teamB_mmr, 1)}]\n'
+            for i in range(len(teamB_list)):
+                str_1 += f'[{teamB_list[i][0]}] / {teamB_list[i][1]} / {teamB_list[i][2]}번 \n'
 
-            str_2 = f'2팀: 합계[{round(teamA_mmr, 1)}]\n' \
-                    f' {teamA_list[0][0]}  {teamA_list[0][1]}  {teamA_list[0][2]}번 \n' \
-                    f' {teamA_list[1][0]}  {teamA_list[1][1]}  {teamA_list[1][2]}번 \n'  \
-                    f' {teamA_list[2][0]}  {teamA_list[2][1]}  {teamA_list[2][2]}번 \n' \
-                    f' {teamA_list[3][0]}  {teamA_list[3][1]}  {teamA_list[3][2]}번 \n' \
-                    f' {teamA_list[4][0]}  {teamA_list[4][1]}  {teamA_list[4][2]}번 \n'
+            str_2 = f'2팀: 합계[{round(teamA_mmr, 1)}]\n'
+            for i in range(len(teamA_list)):
+                str_2 += f'[{teamA_list[i][0]}] / {teamA_list[i][1]} / {teamA_list[i][2]}번 \n'
+
         else:
-            str_1 = f'1팀: 합계[{round(teamA_mmr, 1)}]\n' \
-                    f' {teamA_list[0][0]}  {teamA_list[0][1]}  {teamA_list[0][2]}번 \n' \
-                    f' {teamA_list[1][0]}  {teamA_list[1][1]}  {teamA_list[1][2]}번 \n'  \
-                    f' {teamA_list[2][0]}  {teamA_list[2][1]}  {teamA_list[2][2]}번 \n' \
-                    f' {teamA_list[3][0]}  {teamA_list[3][1]}  {teamA_list[3][2]}번 \n' \
-                    f' {teamA_list[4][0]}  {teamA_list[4][1]}  {teamA_list[4][2]}번 \n'
-            str_2 = f'2팀: 합계[{round(teamB_mmr, 1)}]\n' \
-                    f' {teamB_list[0][0]}  {teamB_list[0][1]}  {teamB_list[0][2]}번 \n' \
-                    f' {teamB_list[1][0]}  {teamB_list[1][1]}  {teamB_list[1][2]}번 \n'  \
-                    f' {teamB_list[2][0]}  {teamB_list[2][1]}  {teamB_list[2][2]}번 \n' \
-                    f' {teamB_list[3][0]}  {teamB_list[3][1]}  {teamB_list[3][2]}번 \n' \
-                    f' {teamB_list[4][0]}  {teamB_list[4][1]}  {teamB_list[4][2]}번 \n'
+            str_1 = f'1팀: 합계[{round(teamA_mmr, 1)}]\n'
+            for i in range(len(teamA_list)):
+                str_1 += f'[{teamA_list[i][0]}] / {teamA_list[i][1]} / {teamA_list[i][2]}번 \n'
 
-        ret_str = ">>> 기존 방식(Before)\n" + str_1 + "\n" + str_2 + "두 팀 자이 : 합계[" + str(round(abs(teamA_mmr - teamB_mmr), 1)) + "]\n"
-        print(ret_str)
+            str_2 = f'2팀: 합계[{round(teamB_mmr, 1)}]\n'
+            for i in range(len(teamB_list)):
+                str_2 += f'[{teamB_list[i][0]}] / {teamB_list[i][1]} / {teamB_list[i][2]}번 \n'
+
+        ret_str = ">>> 기존 방식(Before)\n" + str_1 + "\n" + str_2 + "* 두 팀 자이 : 합계[" + str(round(abs(teamA_mmr - teamB_mmr), 1)) + "]\n"
+
+        if DEFINE_DEBUG_MODE:
+            print(ret_str)
         return ret_str
 
     def calc_team_mmr(self, team_list):

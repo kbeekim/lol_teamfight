@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>656</width>
-    <height>482</height>
+    <width>652</width>
+    <height>846</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -23,134 +23,122 @@
     </rect>
    </property>
    <layout class="QGridLayout" name="gridLayout">
-    <item row="2" column="1">
-     <widget class="QPushButton" name="teamB_3_btn">
-      <property name="font">
-       <font>
-        <family>Noto Sans Korean Regular</family>
-       </font>
-      </property>
-      <property name="text">
-       <string/>
-      </property>
-     </widget>
+    <property name="sizeConstraint">
+     <enum>QLayout::SetNoConstraint</enum>
+    </property>
+    <item row="0" column="0" rowspan="2">
+     <layout class="QVBoxLayout" name="teamALayout"/>
     </item>
-    <item row="1" column="0">
-     <widget class="QPushButton" name="teamA_2_btn">
-      <property name="font">
-       <font>
-        <family>Noto Sans Korean Regular</family>
-       </font>
-      </property>
-      <property name="text">
-       <string/>
-      </property>
-     </widget>
+    <item row="0" column="2" rowspan="2">
+     <layout class="QVBoxLayout" name="teamBLayout"/>
     </item>
-    <item row="4" column="0">
-     <widget class="QPushButton" name="teamA_5_btn">
-      <property name="font">
-       <font>
-        <family>Noto Sans Korean Regular</family>
-       </font>
+    <item row="0" column="1" rowspan="2">
+     <layout class="QVBoxLayout" name="verticalLayout">
+      <property name="sizeConstraint">
+       <enum>QLayout::SetMinimumSize</enum>
       </property>
-      <property name="text">
-       <string/>
-      </property>
-     </widget>
-    </item>
-    <item row="1" column="1">
-     <widget class="QPushButton" name="teamB_2_btn">
-      <property name="font">
-       <font>
-        <family>Noto Sans Korean Regular</family>
-       </font>
-      </property>
-      <property name="text">
-       <string/>
-      </property>
-     </widget>
-    </item>
-    <item row="4" column="1">
-     <widget class="QPushButton" name="teamB_5_btn">
-      <property name="font">
-       <font>
-        <family>Noto Sans Korean Regular</family>
-       </font>
-      </property>
-      <property name="text">
-       <string/>
-      </property>
-     </widget>
-    </item>
-    <item row="0" column="1">
-     <widget class="QPushButton" name="teamB_1_btn">
-      <property name="font">
-       <font>
-        <family>Noto Sans Korean Regular</family>
-       </font>
-      </property>
-      <property name="text">
-       <string/>
-      </property>
-     </widget>
-    </item>
-    <item row="3" column="1">
-     <widget class="QPushButton" name="teamB_4_btn">
-      <property name="font">
-       <font>
-        <family>Noto Sans Korean Regular</family>
-       </font>
-      </property>
-      <property name="text">
-       <string/>
-      </property>
-     </widget>
-    </item>
-    <item row="2" column="0">
-     <widget class="QPushButton" name="teamA_3_btn">
-      <property name="font">
-       <font>
-        <family>Noto Sans Korean Regular</family>
-       </font>
-      </property>
-      <property name="text">
-       <string/>
-      </property>
-     </widget>
-    </item>
-    <item row="0" column="0">
-     <widget class="QPushButton" name="teamA_1_btn">
-      <property name="font">
-       <font>
-        <family>Noto Sans Korean Regular</family>
-       </font>
-      </property>
-      <property name="text">
-       <string/>
-      </property>
-     </widget>
-    </item>
-    <item row="3" column="0">
-     <widget class="QPushButton" name="teamA_4_btn">
-      <property name="font">
-       <font>
-        <family>Noto Sans Korean Regular</family>
-       </font>
-      </property>
-      <property name="text">
-       <string/>
-      </property>
-     </widget>
+      <item>
+       <widget class="QLabel" name="mid_label">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+        <property name="pixmap">
+         <pixmap>../top.png</pixmap>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="top_label">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="baseSize">
+         <size>
+          <width>0</width>
+          <height>0</height>
+         </size>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+        <property name="pixmap">
+         <pixmap>../jungle.png</pixmap>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="jug_label">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="baseSize">
+         <size>
+          <width>52</width>
+          <height>52</height>
+         </size>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+        <property name="pixmap">
+         <pixmap>../mid.png</pixmap>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="bot_label">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+        <property name="pixmap">
+         <pixmap>../bottom.png</pixmap>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="sup_label">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+        <property name="pixmap">
+         <pixmap>../support.png</pixmap>
+        </property>
+       </widget>
+      </item>
+     </layout>
     </item>
    </layout>
   </widget>
   <widget class="QTextEdit" name="team_edit">
    <property name="geometry">
     <rect>
-     <x>10</x>
-     <y>350</y>
-     <width>641</width>
+     <x>0</x>
+     <y>630</y>
+     <width>651</width>
      <height>71</height>
     </rect>
    </property>
@@ -163,9 +151,9 @@
   <widget class="QPushButton" name="ok_btn">
    <property name="geometry">
     <rect>
-     <x>10</x>
-     <y>430</y>
-     <width>641</width>
+     <x>0</x>
+     <y>800</y>
+     <width>651</width>
      <height>41</height>
     </rect>
    </property>
@@ -177,6 +165,59 @@
    </property>
    <property name="text">
     <string>확인</string>
+   </property>
+  </widget>
+  <widget class="QTextEdit" name="log_edit">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>340</y>
+     <width>651</width>
+     <height>281</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <family>Noto Sans Korean Regular</family>
+    </font>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="ok_btn_2">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>730</y>
+     <width>321</width>
+     <height>41</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <family>Noto Sans Korean Regular</family>
+     <pointsize>12</pointsize>
+    </font>
+   </property>
+   <property name="text">
+    <string>1팀 승리</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="ok_btn_3">
+   <property name="geometry">
+    <rect>
+     <x>330</x>
+     <y>730</y>
+     <width>321</width>
+     <height>41</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <family>Noto Sans Korean Regular</family>
+     <pointsize>12</pointsize>
+    </font>
+   </property>
+   <property name="text">
+    <string>2팀 승리</string>
    </property>
   </widget>
  </widget>

@@ -178,7 +178,7 @@
        </font>
       </property>
       <property name="text">
-       <string>출발 뿌우우</string>
+       <string>팀 짜기 시작</string>
       </property>
      </widget>
      <widget class="QLabel" name="player_cnt_label">
