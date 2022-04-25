@@ -45,6 +45,9 @@ class WindowClass(QMainWindow, form_class):
         version = f'v{MAJOR_VERSION}.{MINOR_VERSION}'
         self.setWindowTitle("롤 인력사무소 " + version)
 
+        # excel data load
+        excel_data.read_gspread(excel.SHEET8)
+
         # 10명의 참가자 정보 List
         self.pl = PlayerInfoClass()
         self.player_btn_list = [None] * MAX_PLAYER_CNT
@@ -135,7 +138,7 @@ class WindowClass(QMainWindow, form_class):
             print("clicked_load_btn : " + str(tmp_list))
 
         self.clicked_clear_btn()
-        excel_data.read_gspread()
+        excel_data.read_gspread(excel.SHEET8)
         self.load_worker_list()
 
         for tmp_nick in tmp_list:

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>652</width>
-    <height>846</height>
+    <width>669</width>
+    <height>957</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -16,7 +16,7 @@
   <widget class="QWidget" name="gridLayoutWidget">
    <property name="geometry">
     <rect>
-     <x>0</x>
+     <x>10</x>
      <y>10</y>
      <width>651</width>
      <height>321</height>
@@ -136,8 +136,8 @@
   <widget class="QTextEdit" name="team_edit">
    <property name="geometry">
     <rect>
-     <x>0</x>
-     <y>630</y>
+     <x>10</x>
+     <y>510</y>
      <width>651</width>
      <height>71</height>
     </rect>
@@ -148,32 +148,13 @@
     </font>
    </property>
   </widget>
-  <widget class="QPushButton" name="ok_btn">
-   <property name="geometry">
-    <rect>
-     <x>0</x>
-     <y>800</y>
-     <width>651</width>
-     <height>41</height>
-    </rect>
-   </property>
-   <property name="font">
-    <font>
-     <family>Noto Sans Korean Regular</family>
-     <pointsize>12</pointsize>
-    </font>
-   </property>
-   <property name="text">
-    <string>확인</string>
-   </property>
-  </widget>
   <widget class="QTextEdit" name="log_edit">
    <property name="geometry">
     <rect>
-     <x>0</x>
+     <x>10</x>
      <y>340</y>
      <width>651</width>
-     <height>281</height>
+     <height>161</height>
     </rect>
    </property>
    <property name="font">
@@ -182,11 +163,11 @@
     </font>
    </property>
   </widget>
-  <widget class="QPushButton" name="ok_btn_2">
+  <widget class="QPushButton" name="team1_win_btn">
    <property name="geometry">
     <rect>
-     <x>0</x>
-     <y>730</y>
+     <x>10</x>
+     <y>590</y>
      <width>321</width>
      <height>41</height>
     </rect>
@@ -201,11 +182,11 @@
     <string>1팀 승리</string>
    </property>
   </widget>
-  <widget class="QPushButton" name="ok_btn_3">
+  <widget class="QPushButton" name="team2_win_btn">
    <property name="geometry">
     <rect>
-     <x>330</x>
-     <y>730</y>
+     <x>340</x>
+     <y>590</y>
      <width>321</width>
      <height>41</height>
     </rect>
@@ -220,6 +201,42 @@
     <string>2팀 승리</string>
    </property>
   </widget>
+  <widget class="QPushButton" name="ok_btn">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>910</y>
+     <width>651</width>
+     <height>41</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <family>Noto Sans Korean Regular</family>
+     <pointsize>12</pointsize>
+    </font>
+   </property>
+   <property name="text">
+    <string>확인</string>
+   </property>
+  </widget>
+  <widget class="QTableWidget" name="tableWidget">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>640</y>
+     <width>651</width>
+     <height>261</height>
+    </rect>
+   </property>
+  </widget>
+  <zorder>gridLayoutWidget</zorder>
+  <zorder>team_edit</zorder>
+  <zorder>team1_win_btn</zorder>
+  <zorder>team2_win_btn</zorder>
+  <zorder>ok_btn</zorder>
+  <zorder>tableWidget</zorder>
+  <zorder>log_edit</zorder>
  </widget>
  <resources/>
  <connections/>
