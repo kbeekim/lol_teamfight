@@ -3,7 +3,7 @@ import sys
 from PyQt5.QtWidgets import QApplication, QWidget
 import main_window
 
-DEFINE_DEBUG_MODE = True
+DEFINE_DEBUG_MODE = False
 
 
 def resource_path(file_name, detail_path):

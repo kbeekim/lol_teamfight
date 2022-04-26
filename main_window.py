@@ -120,6 +120,12 @@ class WindowClass(QMainWindow, form_class):
         self.team = None
         self.make_team_btn.clicked.connect(self.clicked_make_team_btn)
 
+        # 팀짜기 radio 버튼
+        # 기본은 최소차이 방식
+        self.team_min_diff_radio_btn.click()
+        self.team_rank_radio_btn.hide()
+        self.team_min_diff_radio_btn.hide()
+
         # ( x / 10 ) label
         self.refresh_player_cnt()
 
@@ -135,7 +141,7 @@ class WindowClass(QMainWindow, form_class):
             tmp_list.append(dix['NICKNAME'])
 
         if DEFINE_DEBUG_MODE:
-            print("clicked_load_btn : " + str(tmp_list))
+            print("[kb.debug] load btn 시, 기존 tmp list : " + str(tmp_list))
 
         self.clicked_clear_btn()
         excel_data.read_gspread(excel.SHEET8)
@@ -155,8 +161,12 @@ class WindowClass(QMainWindow, form_class):
 
         if cnt == MAX_PLAYER_CNT:
             self.make_team_btn.show()
+            self.team_min_diff_radio_btn.show()
+            self.team_rank_radio_btn.show()
         elif self.make_team_btn.isEnabled():
             self.make_team_btn.hide()
+            self.team_min_diff_radio_btn.hide()
+            self.team_rank_radio_btn.hide()
 
     def double_clicked_worker(self):
         self.clicked_insert_worker_btn()
@@ -176,14 +186,18 @@ class WindowClass(QMainWindow, form_class):
             self.show_message("모든 정원이 차지 않았습니다.", STATUS_BAR_TYPE_WARN, STATUS_BAR_TIMEOUT_WARN_SHORT)
             return
 
-        # kb.todo 임시.
-        str_before = self.pl.build_team_before()
-        ret = self.pl.build_team_after()
+        if self.team_rank_radio_btn.isChecked():
+            ret = self.pl.build_team_rank()
+        elif self.team_min_diff_radio_btn.isChecked():
+            ret = self.pl.build_team_min_diff()
+        else:
+            self.show_message("팀 선택 방식 오류", STATUS_BAR_TYPE_WARN, STATUS_BAR_TIMEOUT_WARN_SHORT)
+            return
 
         if ret == PLAYER_INFO_TEAM_BUILD_SUCCESS:
             self.show_message("성공!!!", STATUS_BAR_TYPE_WARN, STATUS_BAR_TIMEOUT_WARN_SHORT)
 
-            self.team = team_window.TeamWindow(self.pl.get_team_info(), self.pl.get_all_player_info(), str_before)
+            self.team = team_window.TeamWindow(self.pl.get_team_info(), self.pl.get_all_player_info())
             self.team.show()
         else:
             self.check_error_code_to_msg(ret)
@@ -276,6 +290,7 @@ class WindowClass(QMainWindow, form_class):
     def insert_soldier_to_player(self, soldier_info, tier):
         soldier_info_list = []
         soldier_name = soldier_info['NICKNAME']  # 연계
+        soldier_mmr = soldier_info['MMR']  # 연계
         soldier_info_list.append(soldier_info)
         # return 값으로 player_list 의 idx를 받아 온다.
 
@@ -285,7 +300,7 @@ class WindowClass(QMainWindow, form_class):
             player_idx_list = ret
             if player_idx_list:
                 player_idx = player_idx_list[0]  # 용병은 1명 추가이므로
-                self.set_style_player_btn(player_idx, f'{soldier_name}\n({tier})', PLAYER_FLAG_SOLDIER)
+                self.set_style_player_btn(player_idx, f'{soldier_name}\n({soldier_mmr})', PLAYER_FLAG_SOLDIER)
             self.refresh_player_cnt()
             # soldier window 로 결과값 전송
             return self.SOLDIER_INFO_SUCCESS

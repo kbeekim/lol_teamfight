@@ -294,7 +294,58 @@ class PlayerInfoClass:
         else:
             return self.normal_number
 
-    def build_team_after(self):
+    def build_team_rank(self):
+        """  mmr 순위 순서대로 팀을 짜는 함수
+        * 1, 3, 6, 8, 10 vs 2, 4, 5, 7, 9 mmr 순위대로 팀을 짬
+        * 그룹/분할 조건은 무시된다
+        """
+        self.clear_team_info()
+
+        mmr_list = []
+        teamA_list = []
+        teamB_list = []
+
+        for i in range(MAX_PLAYER_CNT):
+            # mmr_list -> [idx, mmr 값], ...
+            mmr_list.append([i, float(self.player_info[i]['MMR'])])  # MMR 연계
+
+        # mmr 높은 순으로 정렬
+        mmr_list.sort(key=lambda x: x[1], reverse=True)
+
+        if DEFINE_DEBUG_MODE:
+            print("[kb.debug] 순위 방식 팀짜기 mmr list")
+            print(mmr_list)
+
+        for idx, mlist in enumerate(mmr_list):
+            if (idx == 0) | (idx == 2) | (idx == 5) | (idx == 7) | (idx == 9):
+                teamA_list.append(mlist[0])  # player info 의 idx
+            elif (idx == 1) | (idx == 3) | (idx == 4) | (idx == 6) | (idx == 8):
+                teamB_list.append(mlist[0])  # player info 의 idx
+
+        teamA_mmr = self.calc_team_mmr(teamA_list)
+        teamB_mmr = self.calc_team_mmr(teamB_list)
+
+        if DEFINE_DEBUG_MODE:
+            print("[kb.debug] 순위 방식 팀짜기 team info (1, 2팀 나누기 전)")
+            print(teamA_list)
+            print(teamB_list)
+            print(teamA_mmr)
+            print(teamB_mmr)
+
+        if teamA_mmr > teamB_mmr:
+            self.team_info.append(teamB_list)
+            self.team_info.append(teamB_mmr)
+            self.team_info.append(teamA_list)
+            self.team_info.append(teamA_mmr)
+        else:
+            self.team_info.append(teamA_list)
+            self.team_info.append(teamA_mmr)
+            self.team_info.append(teamB_list)
+            self.team_info.append(teamB_mmr)
+
+        return PLAYER_INFO_TEAM_BUILD_SUCCESS
+
+    def build_team_min_diff(self):
         """ mmr 평균 차이가 가장 적도록 팀을 짜는 함수
 
         1) 10명 중에 5명을 뽑는 경우의 수 252 가지를 만든다. -- ret
@@ -315,7 +366,9 @@ class PlayerInfoClass:
             all_case_list.append([ret[idx], ret[case_cnt - 1 - idx]])
         ######################################################################################
         if DEFINE_DEBUG_MODE:
-            print("[kb.test] 이전 play_info : " + str(self.player_info) + "\n")
+            print("[kb.debug] 팀짜기 시작 10명의 play_info")
+            for i in self.player_info:
+                print(i)
 
         group_list = []
         div_list = []
@@ -329,7 +382,6 @@ class PlayerInfoClass:
                 print("player_type 확인", e)
 
         group_list = list(set(list(map(tuple, group_list))))  # 2차 list 중복 제거 - 문제점: 안에 항목이 tuple 로 바뀜.
-
         tmp_list = all_case_list
         for g in group_list:
             # list(g) : 2차 list 중복 제거 - tuple 로 바뀌어 있어 list 로 변환해야함
@@ -357,6 +409,7 @@ class PlayerInfoClass:
             else:
                 first_team_idx, second_team_idx = 0, 1
 
+            # 팀1 idx / 팀1 mmr 합계 / 팀2 idx / 팀2 mmr 합계
             self.team_info.append(tmp_list[final_idx][first_team_idx])
             self.team_info.append(self.calc_team_mmr(tmp_list[final_idx][first_team_idx]))
             self.team_info.append(tmp_list[final_idx][second_team_idx])
@@ -366,54 +419,6 @@ class PlayerInfoClass:
 
         else:
             return PLAYER_INFO_ERROR_TEAM_BUILD_FAIL
-
-    def build_team_before(self):
-        # 기존팀 짜기와 얼마나 달라지는지 확인용 임시 테스트 함수
-        mmr_list = []
-        teamA_list = []
-        teamB_list = []
-        teamA_mmr = 0
-        teamB_mmr = 0
-
-        for i in range(MAX_PLAYER_CNT):
-            mmr_list.append([i, float(self.player_info[i]['MMR'])])  # MMR 연계
-
-        mmr_list.sort(key=lambda x: x[1], reverse=True)
-        print(mmr_list)
-
-        for idx, mlist in enumerate(mmr_list):
-            if (idx == 0) | (idx == 2) | (idx == 5) | (idx == 7) | (idx == 9):
-                teamA_list.append([self.player_info[mlist[0]]['SHORTNICK'], mlist[1], idx+1])  # 줄임말 연계
-                teamA_mmr += mlist[1]
-
-            elif (idx == 1) | (idx == 3) | (idx == 4) | (idx == 6) | (idx == 8):
-                teamB_list.append([self.player_info[mlist[0]]['SHORTNICK'], mlist[1], idx+1])  # 줄임말 연계
-                teamB_mmr += mlist[1]
-        print(teamA_list)
-
-        if teamA_mmr > teamB_mmr:
-            str_1 = f'1팀: 합계[{round(teamB_mmr, 1)}]\n'
-            for i in range(len(teamB_list)):
-                str_1 += f'[{teamB_list[i][0]}] / {teamB_list[i][1]} / {teamB_list[i][2]}번 \n'
-
-            str_2 = f'2팀: 합계[{round(teamA_mmr, 1)}]\n'
-            for i in range(len(teamA_list)):
-                str_2 += f'[{teamA_list[i][0]}] / {teamA_list[i][1]} / {teamA_list[i][2]}번 \n'
-
-        else:
-            str_1 = f'1팀: 합계[{round(teamA_mmr, 1)}]\n'
-            for i in range(len(teamA_list)):
-                str_1 += f'[{teamA_list[i][0]}] / {teamA_list[i][1]} / {teamA_list[i][2]}번 \n'
-
-            str_2 = f'2팀: 합계[{round(teamB_mmr, 1)}]\n'
-            for i in range(len(teamB_list)):
-                str_2 += f'[{teamB_list[i][0]}] / {teamB_list[i][1]} / {teamB_list[i][2]}번 \n'
-
-        ret_str = ">>> 기존 방식(Before)\n" + str_1 + "\n" + str_2 + "* 두 팀 자이 : 합계[" + str(round(abs(teamA_mmr - teamB_mmr), 1)) + "]\n"
-
-        if DEFINE_DEBUG_MODE:
-            print(ret_str)
-        return ret_str
 
     def calc_team_mmr(self, team_list):
         ret = 0

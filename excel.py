@@ -16,6 +16,7 @@ def next_available_row(sh, col):
     str_list = list(sh.col_values(col))
     return len(str_list) + 1
 
+
 def is_float(num):
     try:
         float(num)
@@ -56,12 +57,11 @@ class ExcelClass:
 
             # 멤버 총원
             self.total_member = len(self.worker_info)
-            if DEFINE_DEBUG_MODE:
-                self.data_validation(self.sheet)
+            self.data_validation(self.sheet)
 
         elif sh_name == SHEET5:
             self.end_row = next_available_row(self.sheet, 5) - 1  # 5 = E열
-            
+
             # 마지막 행에 적혀 있는 문구 (ex] 4.24 내전50)
             last_text = self.sheet.cell(self.end_row, 5).value
             tmp = last_text.split('내전')
@@ -81,6 +81,14 @@ class ExcelClass:
             final_cnt = str(int(last_cnt) + 1)
 
             self.final_date_text = f'{final_date} 내전{final_cnt}.'
+
+    def get_update_cell_pos(self):
+        final_row = self.end_row + 1
+
+        start_pos = f'E{final_row}'
+        end_pos = f'G{final_row + 4}'
+
+        return [start_pos, end_pos]
 
     def update_5_sheet(self, in_data):
         final_row = self.end_row + 1
@@ -128,8 +136,14 @@ class ExcelClass:
             ret = False
 
         mmr_value_list = sh.col_values(4)  # 엑셀 4열이 MMR 값
-        print("[kb.test] mmr_value_list :  " + str(mmr_value_list) + "\n")
+
+        if DEFINE_DEBUG_MODE:
+            print("[kb.debug] mmr_value_list")
+            for i in mmr_value_list:
+                print(i)
+
         for idx, mmr in enumerate(mmr_value_list):
+            # 첫 행은 "MMR" 문자이므로 제외
             if idx == 0:
                 continue
             if not is_float(mmr):

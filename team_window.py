@@ -1,7 +1,7 @@
 from PyQt5 import uic
 from PyQt5.QtCore import Qt, QMimeData
 from PyQt5.QtWidgets import QDialog, QPushButton, QTableWidgetItem
-from PyQt5.QtGui import QDragEnterEvent, QDrag
+from PyQt5.QtGui import QDragEnterEvent, QDrag, QPixmap
 from PyQt5.QtGui import QDropEvent
 
 import excel
@@ -26,7 +26,7 @@ class DragButton(QPushButton):
 
 
 class TeamWindow(QDialog, form_class):
-    def __init__(self, team_info, player_info, str_before):
+    def __init__(self, team_info, player_info):
         super().__init__()
         self.setupUi(self)
         self.setWindowTitle("팀 결과")
@@ -38,16 +38,25 @@ class TeamWindow(QDialog, form_class):
 
         self.team_info = team_info
         self.player_info = player_info
-        self.str_before = str_before
         self.final_list = []
+
+        pos_img_list = ["top.png", "jungle.png", "mid.png", "bottom.png", "support.png"]
+
+        self.top_label.setPixmap(QPixmap(resource_path(pos_img_list[0], '/img/')))
+        self.jug_label.setPixmap(QPixmap(resource_path(pos_img_list[1], '/img/')))
+        self.mid_label.setPixmap(QPixmap(resource_path(pos_img_list[2], '/img/')))
+        self.adc_label.setPixmap(QPixmap(resource_path(pos_img_list[3], '/img/')))
+        self.sup_label.setPixmap(QPixmap(resource_path(pos_img_list[4], '/img/')))
 
         self.tableWidget.setRowCount(5)
         self.tableWidget.setColumnCount(3)
 
         self.set_text_ui()
-        self.ok_btn.clicked.connect(self.clicked_ok_btn)
         self.team1_win_btn.clicked.connect(self.clicked_team1_win_btn)
         self.team2_win_btn.clicked.connect(self.clicked_team2_win_btn)
+
+        self.upload_btn.clicked.connect(self.clicked_upload_btn)
+        self.close_btn.clicked.connect(self.clicked_close_btn)
 
     def dragEnterEvent(self, e):
         e.accept()
@@ -96,7 +105,7 @@ class TeamWindow(QDialog, form_class):
             print("Unknown Widget")
 
         # if DEFINE_DEBUG_MODE:
-            # print(f'pos x, y : {pos.x()}, {pos.y()}')
+        # print(f'pos x, y : {pos.x()}, {pos.y()}')
 
         e.accept()
 
@@ -109,9 +118,7 @@ class TeamWindow(QDialog, form_class):
         teamB_sum = self.team_info[3]
         # teamB_mmr = round(self.team_info[3] / 5, 1)
 
-        # kb.todo 뒷 배경도 검정색으로..?
-
-        line_list = ['TOP', 'JUG', 'MID', 'BOT', 'SUP']
+        line_list = ['TOP', 'JUG', 'MID', 'ADC', 'SUP']
         for idx, line in enumerate(line_list):
             btn = DragButton(line)
             btn.setMaximumHeight(56)  # 버튼 높이 강제 조절
@@ -132,27 +139,16 @@ class TeamWindow(QDialog, form_class):
             )
             self.teamBLayout.addWidget(btn)
 
-        log_str = "\n>>> 새로운 방식 (After)\n"
-        if DEFINE_DEBUG_MODE:
-            print(f"1팀: 합계 [{teamA_sum}]")
-            log_str += f"1팀: 합계 [{teamA_sum}]\n"
+        log_str = f"1팀: 합계 [{teamA_sum}]\n"
+        for i in teamA_list:
+            log_str += f"[{self.get_short_nick(i)}] / {str(self.get_mmr(i))}\n"
+        log_str += f"\n2팀: 합계 [{teamB_sum}]\n"
 
-            for i in teamA_list:
-                print(f"[{self.get_short_nick(i)}] / {str(self.get_mmr(i))}")
-                log_str += f"[{self.get_short_nick(i)}] / {str(self.get_mmr(i))}\n"
+        for i in teamB_list:
+            log_str += f"[{self.get_short_nick(i)}] / {str(self.get_mmr(i))}\n"
+        log_str += f"* 두 팀 차이: 합계[{round(abs(teamB_sum - teamA_sum), 1)}]\n"
 
-            print(f"\n2팀: 합계 [{teamB_sum}]")
-            log_str += f"\n2팀: 합계 [{teamB_sum}]\n"
-
-            for i in teamB_list:
-                print(f"[{self.get_short_nick(i)}] / {str(self.get_mmr(i))}")
-                log_str += f"[{self.get_short_nick(i)}] / {str(self.get_mmr(i))}\n"
-
-            print(
-                f"두 팀 차이: 합계[{round(abs(teamB_sum - teamA_sum), 1)}] \n")
-            log_str += f"* 두 팀 차이: 합계[{round(abs(teamB_sum - teamA_sum), 1)}]\n"
-
-            self.log_edit.setText(self.str_before + log_str)
+        self.log_edit.setText(log_str)
 
         str_1 = f"1팀: {self.get_short_nick(teamA_list[0])} {self.get_short_nick(teamA_list[1])} " \
                 f"{self.get_short_nick(teamA_list[2])} {self.get_short_nick(teamA_list[3])} {self.get_short_nick(teamA_list[4])}"
@@ -162,7 +158,9 @@ class TeamWindow(QDialog, form_class):
         self.team_edit.setText(str_1 + "\n" + str_2)
 
         if DEFINE_DEBUG_MODE:
-            print("=======결과=======")
+            print("[kb.debug] 최종 팀결성 결과")
+            print(log_str)
+            print("=========결과=========")
             print(str_1 + "\n" + str_2)
 
     def clicked_team1_win_btn(self):
@@ -192,17 +190,23 @@ class TeamWindow(QDialog, form_class):
 
             self.final_list.append([date_text, btn_nick_win, btn_nick_lose])
 
+        # kb.todo 임시
+        self.tmp_edit.setText("입력 위치: " + str(excel_data.get_update_cell_pos()))
+
         if DEFINE_DEBUG_MODE:
+            print("[kb.debug] gspread 업로드 전, final list")
             print(self.final_list)
 
-    def clicked_ok_btn(self):
+    def clicked_upload_btn(self):
         # kb.todo 예외처리
         if self.final_list is None:
             return
 
-        print(self.final_list)
         excel_data.update_5_sheet(self.final_list)
         # self.close()
+
+    def clicked_close_btn(self):
+        self.close()
 
     def get_nickname(self, idx):
         return self.player_info[idx]['NICKNAME']

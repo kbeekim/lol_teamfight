@@ -28,7 +28,7 @@
      <rect>
       <x>0</x>
       <y>0</y>
-      <width>931</width>
+      <width>941</width>
       <height>631</height>
      </rect>
     </property>
@@ -49,7 +49,7 @@
        <rect>
         <x>620</x>
         <y>520</y>
-        <width>281</width>
+        <width>291</width>
         <height>51</height>
        </rect>
       </property>
@@ -67,7 +67,7 @@
        <rect>
         <x>620</x>
         <y>9</y>
-        <width>191</width>
+        <width>201</width>
         <height>31</height>
        </rect>
       </property>
@@ -85,7 +85,7 @@
        <rect>
         <x>620</x>
         <y>50</y>
-        <width>191</width>
+        <width>201</width>
         <height>461</height>
        </rect>
       </property>
@@ -128,7 +128,7 @@
      <widget class="QPushButton" name="insert_worker_btn">
       <property name="geometry">
        <rect>
-        <x>830</x>
+        <x>840</x>
         <y>50</y>
         <width>71</width>
         <height>301</height>
@@ -166,7 +166,7 @@
        <rect>
         <x>30</x>
         <y>520</y>
-        <width>571</width>
+        <width>451</width>
         <height>51</height>
        </rect>
       </property>
@@ -202,7 +202,7 @@
      <widget class="QPushButton" name="insert_group_btn">
       <property name="geometry">
        <rect>
-        <x>830</x>
+        <x>840</x>
         <y>360</y>
         <width>71</width>
         <height>71</height>
@@ -224,7 +224,7 @@
      <widget class="QPushButton" name="insert_division_btn">
       <property name="geometry">
        <rect>
-        <x>830</x>
+        <x>840</x>
         <y>440</y>
         <width>71</width>
         <height>71</height>
@@ -243,7 +243,7 @@
      <widget class="QPushButton" name="search_clear_btn">
       <property name="geometry">
        <rect>
-        <x>830</x>
+        <x>840</x>
         <y>10</y>
         <width>71</width>
         <height>31</height>
@@ -278,6 +278,32 @@
       <property name="text">
        <string>load</string>
       </property>
+     </widget>
+     <widget class="QWidget" name="verticalLayoutWidget">
+      <property name="geometry">
+       <rect>
+        <x>492</x>
+        <y>520</y>
+        <width>111</width>
+        <height>51</height>
+       </rect>
+      </property>
+      <layout class="QVBoxLayout" name="team_layout">
+       <item>
+        <widget class="QRadioButton" name="team_rank_radio_btn">
+         <property name="text">
+          <string>순위 방식</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QRadioButton" name="team_min_diff_radio_btn">
+         <property name="text">
+          <string>최소 방식</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
      </widget>
     </widget>
     <widget class="QWidget" name="tab_2">

@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>669</width>
-    <height>957</height>
+    <height>991</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -48,9 +48,6 @@
         <property name="text">
          <string/>
         </property>
-        <property name="pixmap">
-         <pixmap>../top.png</pixmap>
-        </property>
        </widget>
       </item>
       <item>
@@ -69,9 +66,6 @@
         </property>
         <property name="text">
          <string/>
-        </property>
-        <property name="pixmap">
-         <pixmap>../jungle.png</pixmap>
         </property>
        </widget>
       </item>
@@ -92,13 +86,10 @@
         <property name="text">
          <string/>
         </property>
-        <property name="pixmap">
-         <pixmap>../mid.png</pixmap>
-        </property>
        </widget>
       </item>
       <item>
-       <widget class="QLabel" name="bot_label">
+       <widget class="QLabel" name="adc_label">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
           <horstretch>0</horstretch>
@@ -107,9 +98,6 @@
         </property>
         <property name="text">
          <string/>
-        </property>
-        <property name="pixmap">
-         <pixmap>../bottom.png</pixmap>
         </property>
        </widget>
       </item>
@@ -123,9 +111,6 @@
         </property>
         <property name="text">
          <string/>
-        </property>
-        <property name="pixmap">
-         <pixmap>../support.png</pixmap>
         </property>
        </widget>
       </item>
@@ -201,12 +186,12 @@
     <string>2팀 승리</string>
    </property>
   </widget>
-  <widget class="QPushButton" name="ok_btn">
+  <widget class="QPushButton" name="upload_btn">
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>910</y>
-     <width>651</width>
+     <y>940</y>
+     <width>531</width>
      <height>41</height>
     </rect>
    </property>
@@ -217,7 +202,7 @@
     </font>
    </property>
    <property name="text">
-    <string>확인</string>
+    <string>업로드</string>
    </property>
   </widget>
   <widget class="QTableWidget" name="tableWidget">
@@ -230,13 +215,49 @@
     </rect>
    </property>
   </widget>
+  <widget class="QPushButton" name="close_btn">
+   <property name="geometry">
+    <rect>
+     <x>550</x>
+     <y>940</y>
+     <width>111</width>
+     <height>41</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <family>Noto Sans Korean Regular</family>
+     <pointsize>12</pointsize>
+    </font>
+   </property>
+   <property name="text">
+    <string>닫기</string>
+   </property>
+  </widget>
+  <widget class="QTextEdit" name="tmp_edit">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>910</y>
+     <width>651</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <family>Noto Sans Korean Regular</family>
+    </font>
+   </property>
+  </widget>
   <zorder>gridLayoutWidget</zorder>
   <zorder>team_edit</zorder>
   <zorder>team1_win_btn</zorder>
   <zorder>team2_win_btn</zorder>
-  <zorder>ok_btn</zorder>
+  <zorder>upload_btn</zorder>
   <zorder>tableWidget</zorder>
   <zorder>log_edit</zorder>
+  <zorder>close_btn</zorder>
+  <zorder>tmp_edit</zorder>
  </widget>
  <resources/>
  <connections/>

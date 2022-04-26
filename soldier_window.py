@@ -12,7 +12,7 @@ UI_FILE_NAME = 'soldier_window.ui'
 PATH = resource_path(UI_FILE_NAME, '/img/ui/')
 form_class = uic.loadUiType(PATH)[0]
 
-MIN_MMR_VALUE = 600
+MIN_MMR_VALUE = 500
 MAX_MMR_VALUE = 2000
 
 DIAMOND_MMR_VALUE = 1150
@@ -36,7 +36,7 @@ ALERT_MSG_TIMEOUT_NORMAL = 3000
 # worker_info 와 동일한 구조로 soldier_info 를 만든다
 # (excel.py 의 worker_info 양식이 변경 되면 같이 수정 필요)
 def make_soldier_info(nickname, mmr_str):
-    soldier_info = {'NUM': 99, 'NICKNAME': nickname, 'SHORTNICK': nickname, 'MMR' : float(mmr_str), 'ENTRY': 0}
+    soldier_info = {'NUM': 99, 'NICKNAME': nickname, 'SHORTNICK': nickname, 'MMR' : round(float(mmr_str), 1), 'ENTRY': 0}
 
     # soldier_info[1] = nickname
     # soldier_info[2] = nickname
@@ -45,11 +45,15 @@ def make_soldier_info(nickname, mmr_str):
     return soldier_info
 
 
-def check_valid_mmr(mmr_str):
-    if not mmr_str.isdigit():
+def is_number(num):
+    try:
+        float(num)
+        return True     # num을 float으로 변환할 수 있는 경우
+    except ValueError:  # num을 float으로 변환할 수 없는 경우
         return False
 
-    mmr = int(mmr_str)
+
+def check_valid_mmr(mmr):
     if mmr < MIN_MMR_VALUE:
         return False
     elif mmr > MAX_MMR_VALUE:
@@ -58,9 +62,7 @@ def check_valid_mmr(mmr_str):
         return True
 
 
-def calc_mmr2tier(mmr_str):
-    mmr = int(mmr_str)
-
+def calc_mmr2tier(mmr):
     # 높은 티어부터 검색
     for i in range(len(MMR_LIST)):
         if mmr >= MMR_LIST[i]['mmr']:
@@ -149,10 +151,22 @@ class SoldierWindow(QWidget, form_class):
             if not mmr_str:
                 self.show_alert_message("아이언도 mmr은 있답니다.", ALERT_MSG_TYPE_NORMAL)
                 return
-            elif not check_valid_mmr(mmr_str):
+            elif not is_number(mmr_str):
+                self.show_alert_message("숫자가 아니무니다.", ALERT_MSG_TYPE_NORMAL)
+                return
+
+            if "." in mmr_str:
+                under_dot = mmr_str.split('.')[1]
+                if len(under_dot) > 1:
+                    self.show_alert_message("소수점 한 자리까지만 입력해주세요.", ALERT_MSG_TYPE_NORMAL)
+                    return
+
+            mmr = round(float(mmr_str), 1)
+            if not check_valid_mmr(mmr):
                 self.show_alert_message("우리집 고양이가 mmr을 입력했나보군요!", ALERT_MSG_TYPE_NORMAL)
                 return
-            tier = calc_mmr2tier(mmr_str)
+
+            tier = calc_mmr2tier(mmr)
 
         else:  # mmr 자동 입력이라면
             idx = self.mmr_combo_box.currentIndex()
