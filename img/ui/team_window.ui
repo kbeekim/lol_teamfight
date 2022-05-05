@@ -38,7 +38,7 @@
        <enum>QLayout::SetMinimumSize</enum>
       </property>
       <item>
-       <widget class="QLabel" name="mid_label">
+       <widget class="QLabel" name="top_label">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
           <horstretch>0</horstretch>
@@ -51,7 +51,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QLabel" name="top_label">
+       <widget class="QLabel" name="jug_label">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
           <horstretch>0</horstretch>
@@ -70,7 +70,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QLabel" name="jug_label">
+       <widget class="QLabel" name="mid_label">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
           <horstretch>0</horstretch>
@@ -234,7 +234,7 @@
     <string>닫기</string>
    </property>
   </widget>
-  <widget class="QTextEdit" name="tmp_edit">
+  <widget class="QLabel" name="tmp_label">
    <property name="geometry">
     <rect>
      <x>10</x>
@@ -246,7 +246,12 @@
    <property name="font">
     <font>
      <family>Noto Sans Korean Regular</family>
+     <weight>50</weight>
+     <bold>false</bold>
     </font>
+   </property>
+   <property name="text">
+    <string/>
    </property>
   </widget>
   <zorder>gridLayoutWidget</zorder>
@@ -257,7 +262,7 @@
   <zorder>tableWidget</zorder>
   <zorder>log_edit</zorder>
   <zorder>close_btn</zorder>
-  <zorder>tmp_edit</zorder>
+  <zorder>tmp_label</zorder>
  </widget>
  <resources/>
  <connections/>

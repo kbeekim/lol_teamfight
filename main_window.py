@@ -10,8 +10,13 @@ from PyQt5.QtWidgets import *
 import excel
 import soldier_window
 from playerinfo import *
-from main import resource_path
+from main import resource_path, DEFINE_EVENT_MODE
 from main import DEFINE_DEBUG_MODE
+from popup import ValvePopup, POPUP_TYPE_OK
+
+WORKER_ORDER_FREQUENCY = 0
+WORKER_ORDER_ALPHABET = 1
+WORKER_ORDER_REVERSE_ALPHABET = 2
 
 STATUS_BAR_TIMEOUT_DEFAULT = 2000
 STATUS_BAR_TIMEOUT_SHORT = 1000
@@ -22,7 +27,7 @@ STATUS_BAR_TYPE_NORMAL = 0
 STATUS_BAR_TYPE_WARN = 1
 
 MAJOR_VERSION = 0
-MINOR_VERSION = 3
+MINOR_VERSION = 4
 
 UI_FILE_NAME = 'main_window.ui'
 
@@ -46,7 +51,7 @@ class WindowClass(QMainWindow, form_class):
         self.setWindowTitle("롤 인력사무소 " + version)
 
         # excel data load
-        excel_data.read_gspread(excel.SHEET8)
+        excel_data.read_gspread_sheet8()
 
         # 10명의 참가자 정보 List
         self.pl = PlayerInfoClass()
@@ -58,7 +63,9 @@ class WindowClass(QMainWindow, form_class):
         # SelectionMode = 4 = > ContiguousSelection
         self.worker_list_widget.setSelectionMode(3)
         self.nick_list = None
-        self.load_worker_list()
+
+        # 정렬 default 는 출석순
+        self.load_worker_list(WORKER_ORDER_FREQUENCY)
 
         # 10명 GridLayout 안 player 버튼
         for x in range(5):
@@ -126,14 +133,35 @@ class WindowClass(QMainWindow, form_class):
         self.team_rank_radio_btn.hide()
         self.team_min_diff_radio_btn.hide()
 
+        # 인력 정렬 radio 버튼
+        # 기본은 엑셀 데이터 그대로 (출석순)
+        self.frequency_order_radio_btn.click()
+        self.frequency_order_radio_btn.clicked.connect(self.clicked_order_radbtn)
+        self.alphabet_order_radio_btn.clicked.connect(self.clicked_order_radbtn)
+        self.reverse_order_radio_btn.clicked.connect(self.clicked_order_radbtn)
+
         # ( x / 10 ) label
         self.refresh_player_cnt()
 
         # 상태바
         self.statusBar().setFont(QFont("Noto_Sans", 12))
 
+    def clicked_order_radbtn(self):
+        if self.frequency_order_radio_btn.isChecked():
+            self.load_worker_list(WORKER_ORDER_FREQUENCY)
+        elif self.alphabet_order_radio_btn.isChecked():
+            self.load_worker_list(WORKER_ORDER_ALPHABET)
+        elif self.reverse_order_radio_btn.isChecked():
+            self.load_worker_list(WORKER_ORDER_REVERSE_ALPHABET)
+        else:
+            self.load_worker_list(WORKER_ORDER_FREQUENCY)
+
+        self.clicked_search_clear_btn()
+        self.refresh_worker_list()
+
     def clicked_load_btn(self):
         # kbeekim) 기존의 그룹/분할은 취소되며 idx 도 변경될 수 있음
+
         tmp_list = []
         for dix in self.pl.get_all_player_info():
             if dix is None:
@@ -143,21 +171,40 @@ class WindowClass(QMainWindow, form_class):
         if DEFINE_DEBUG_MODE:
             print("[kb.debug] load btn 시, 기존 tmp list : " + str(tmp_list))
 
-        self.clicked_clear_btn()
-        excel_data.read_gspread(excel.SHEET8)
-        self.load_worker_list()
+        if excel_data.read_gspread_sheet8():
+            self.clicked_clear_btn()
 
-        for tmp_nick in tmp_list:
-            item = self.worker_list_widget.findItems(tmp_nick, Qt.MatchExactly)
-            if len(item) > 0:
-                self.insert_worker_to_player(item, PLAYER_FLAG_NORMAL)
+            if self.frequency_order_radio_btn.isChecked():
+                self.load_worker_list(WORKER_ORDER_FREQUENCY)
+            elif self.alphabet_order_radio_btn.isChecked():
+                self.load_worker_list(WORKER_ORDER_ALPHABET)
+            elif self.reverse_order_radio_btn.isChecked():
+                self.load_worker_list(WORKER_ORDER_REVERSE_ALPHABET)
+            else:
+                self.load_worker_list(WORKER_ORDER_FREQUENCY)
+
+            for tmp_nick in tmp_list:
+                item = self.worker_list_widget.findItems(tmp_nick, Qt.MatchExactly)
+                if len(item) > 0:
+                    self.insert_worker_to_player(item, PLAYER_FLAG_NORMAL)
+            w = ValvePopup(POPUP_TYPE_OK, "MMR 로드 성공!")
+            w.show()
+        else:
+            w = ValvePopup(POPUP_TYPE_OK, "MMR 로드 실패!")
+            w.show()
 
     def clicked_search_clear_btn(self):
         self.search_edit.setText("")
 
     def refresh_player_cnt(self):
         cnt = self.pl.get_player_cnt()
-        self.player_cnt_label.setText(str(cnt) + "/" + str(MAX_PLAYER_CNT))
+        if DEFINE_EVENT_MODE:
+            self.player_cnt_label.setText(str(8) + "/" + str(MAX_PLAYER_CNT))
+            self.player_cnt_label.setStyleSheet(
+                "color: red;"
+            )
+        else:
+            self.player_cnt_label.setText(str(cnt) + "/" + str(MAX_PLAYER_CNT))
 
         if cnt == MAX_PLAYER_CNT:
             self.make_team_btn.show()
@@ -364,9 +411,18 @@ class WindowClass(QMainWindow, form_class):
                 item.setFlags(Qt.ItemIsEnabled |
                               Qt.ItemIsSelectable)
 
-    def load_worker_list(self):
+    def load_worker_list(self, order):
         self.worker_list_widget.clear()
-        self.nick_list = excel_data.get_worker_nickname()
+        tmp_list = excel_data.get_worker_nickname()
+
+        if order == WORKER_ORDER_FREQUENCY:
+            self.nick_list = tmp_list
+        elif order == WORKER_ORDER_ALPHABET:
+            self.nick_list = sorted(tmp_list)
+        elif order == WORKER_ORDER_REVERSE_ALPHABET:
+            self.nick_list = sorted(tmp_list, reverse=True)
+        else:
+            self.nick_list = tmp_list
 
         for nl in self.nick_list:
             self.worker_list_widget.addItem(str(nl))

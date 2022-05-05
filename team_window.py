@@ -1,12 +1,16 @@
+from asyncio import sleep
+
 from PyQt5 import uic
-from PyQt5.QtCore import Qt, QMimeData
+from PyQt5.QtCore import *
+
 from PyQt5.QtWidgets import QDialog, QPushButton, QTableWidgetItem
 from PyQt5.QtGui import QDragEnterEvent, QDrag, QPixmap
 from PyQt5.QtGui import QDropEvent
 
 import excel
-from main import resource_path
+from main import resource_path, DEFINE_MASTER_MODE
 from main import DEFINE_DEBUG_MODE
+from popup import ValvePopup, POPUP_TYPE_OK
 
 UI_FILE_NAME = 'team_window.ui'
 
@@ -22,6 +26,10 @@ class DragButton(QPushButton):
             drag = QDrag(self)
             mime = QMimeData()
             drag.setMimeData(mime)
+
+            pixmap = QPixmap(self.size())
+            self.render(pixmap)
+            drag.setPixmap(pixmap)
             drag.exec_(Qt.MoveAction)
 
 
@@ -39,6 +47,7 @@ class TeamWindow(QDialog, form_class):
         self.team_info = team_info
         self.player_info = player_info
         self.final_list = []
+        self.discord_str = None
 
         pos_img_list = ["top.png", "jungle.png", "mid.png", "bottom.png", "support.png"]
 
@@ -52,6 +61,7 @@ class TeamWindow(QDialog, form_class):
         self.tableWidget.setColumnCount(3)
 
         self.set_text_ui()
+
         self.team1_win_btn.clicked.connect(self.clicked_team1_win_btn)
         self.team2_win_btn.clicked.connect(self.clicked_team2_win_btn)
 
@@ -88,7 +98,8 @@ class TeamWindow(QDialog, form_class):
                         self.teamALayout.insertWidget(src_n, w)
                         break
             else:
-                print("wrong drop position -A")
+                w = ValvePopup(POPUP_TYPE_OK, "1팀 안에서의 이동만 가능합니다.")
+                w.show()
 
         elif team == TEAM_B:
             if 363 <= pos.x() <= 649 and pos.y() <= 316:
@@ -100,9 +111,10 @@ class TeamWindow(QDialog, form_class):
                         self.teamBLayout.insertWidget(src_n, w)
                         break
             else:
-                print("wrong drop position -B")
+                w = ValvePopup(POPUP_TYPE_OK, "2팀 안에서의 이동만 가능합니다.")
+                w.show()
         else:
-            print("Unknown Widget")
+            w = ValvePopup(POPUP_TYPE_OK, "알 수 없는 에러 (개발자에게 신고하세요.)")
 
         # if DEFINE_DEBUG_MODE:
         # print(f'pos x, y : {pos.x()}, {pos.y()}')
@@ -155,13 +167,13 @@ class TeamWindow(QDialog, form_class):
         str_2 = f"2팀: {self.get_short_nick(teamB_list[0])} {self.get_short_nick(teamB_list[1])} " \
                 f"{self.get_short_nick(teamB_list[2])} {self.get_short_nick(teamB_list[3])} {self.get_short_nick(teamB_list[4])} "
 
-        self.team_edit.setText(str_1 + "\n" + str_2)
+        result_txt = "~~~~~~~~~\n" + str_1 + "\n" + str_2
+        self.team_edit.setText(result_txt)
+        self.discord_str = log_str + result_txt
 
         if DEFINE_DEBUG_MODE:
             print("[kb.debug] 최종 팀결성 결과")
-            print(log_str)
-            print("=========결과=========")
-            print(str_1 + "\n" + str_2)
+            print(self.discord_str)
 
     def clicked_team1_win_btn(self):
         self.show_team_data(1)
@@ -170,9 +182,9 @@ class TeamWindow(QDialog, form_class):
         self.show_team_data(2)
 
     def show_team_data(self, win_team):
-        excel_data.read_gspread(excel.SHEET5)
-        date_text = excel_data.get_last_date_text()
+        excel_data.read_gspread_sheet5()
 
+        date_text = excel_data.get_last_date_text()
         self.final_list.clear()
         for n in range(self.teamALayout.count()):  # 5명
             self.tableWidget.setItem(n, 0, QTableWidgetItem(date_text))
@@ -190,8 +202,17 @@ class TeamWindow(QDialog, form_class):
 
             self.final_list.append([date_text, btn_nick_win, btn_nick_lose])
 
+        if win_team == 1:
+            tmp_str = "1팀 승리! 입력 준비 완료"
+        elif win_team == 2:
+            tmp_str = "2팀 승리! 입력 준비 완료"
+
+        # kb.todo sheet5 우선은 모두 성공으로 판단
+        w = ValvePopup(POPUP_TYPE_OK, tmp_str)
+        w.show()
+            
         # kb.todo 임시
-        self.tmp_edit.setText("입력 위치: " + str(excel_data.get_update_cell_pos()))
+        self.tmp_label.setText("입력 위치: " + str(excel_data.get_update_cell_pos()))
 
         if DEFINE_DEBUG_MODE:
             print("[kb.debug] gspread 업로드 전, final list")
@@ -203,7 +224,12 @@ class TeamWindow(QDialog, form_class):
             return
 
         excel_data.update_5_sheet(self.final_list)
-        # self.close()
+
+        # kb.todo sheet5 우선은 모두 성공으로 판단
+        w = ValvePopup(POPUP_TYPE_OK, "업로드 성공!")
+        w.show()
+
+        self.close()
 
     def clicked_close_btn(self):
         self.close()

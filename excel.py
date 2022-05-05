@@ -4,6 +4,7 @@ from datetime import date, timedelta, datetime
 from main import resource_path, DEFINE_DEBUG_MODE
 import gspread
 
+SHEET4 = "4.게임결과(입력)"
 SHEET5 = "5.MMR(복사)"
 SHEET8 = "8.data"
 KEY_FILE_NAME = 'key.json'
@@ -34,70 +35,35 @@ class ExcelClass:
         self.worker_info = []
         self.total_member = 0
 
-        self.sheet = None
+        self.sheet4 = None
+        self.sheet5 = None
+        self.sheet8 = None
 
-    def read_gspread(self, sh_name):
+    # SHEET8 과 관련 함수들
+    def read_gspread_sheet8(self):
+        ret = False
         gc = gspread.service_account(filename=PATH)
-
-        # fill in your gspread url
-        spreadsheet_url = ''
+        # self.doc = gc.open('Season.2022.SPRING')
+        spreadsheet_url = 'https://docs.google.com/spreadsheets/d/1DI5VKpTVu96r4gdvGvTeQOA5GArmhT-uUFDIR4fmdi0/edit#gid=352469473'
         doc = gc.open_by_url(spreadsheet_url)
-
         try:
-            self.sheet = doc.worksheet(sh_name)
+            self.sheet8 = doc.worksheet(SHEET8)
         except Exception as e:
             print("오류 발생 - sheet 명칭 확인", e)
-            return
+            return ret
 
         #   순번     닉네임        줄임말    MMR   참여 횟수
         #   NUM   NICKNAME    SHORTNICK   MMR    ENTRY
-        if sh_name == SHEET8:
-            # sheet.get_all_records()는 개별 시트안에 있는 모든 데이터를 key, value값으로 반환 합니다. -> list of dicts
-            # key는 스프레드 시트에서 첫번째 row가 key값이 되며, 2번째 row부터는 value값으로 가져 옮니다.
-            # self.worker_info = sheet8.get_all_values()
-            self.worker_info = self.sheet.get_all_records()
 
-            # 멤버 총원
-            self.total_member = len(self.worker_info)
-            self.data_validation(self.sheet)
+        # sheet.get_all_records()는 개별 시트안에 있는 모든 데이터를 key, value값으로 반환 합니다. -> list of dicts
+        # key는 스프레드 시트에서 첫번째 row가 key값이 되며, 2번째 row부터는 value값으로 가져 옮니다.
+        # self.worker_info = sheet8.get_all_values()
+        self.worker_info = self.sheet8.get_all_records()
 
-        elif sh_name == SHEET5:
-            self.end_row = next_available_row(self.sheet, 5) - 1  # 5 = E열
-
-            # 마지막 행에 적혀 있는 문구 (ex] 4.24 내전50)
-            last_text = self.sheet.cell(self.end_row, 5).value
-            tmp = last_text.split('내전')
-
-            last_cnt = tmp[1]
-
-            now = datetime.now()
-            # if now.hour < 6:
-            #     base_date = date.today() - timedelta(1)
-            # else:
-            #     base_date = date.today()
-
-            # kbeekim) 그냥 당일 날짜로 하자
-            base_date = date.today()
-
-            final_date = base_date.strftime('%m.%d')
-            final_cnt = str(int(last_cnt) + 1)
-
-            self.final_date_text = f'{final_date} 내전{final_cnt}.'
-
-    def get_update_cell_pos(self):
-        final_row = self.end_row + 1
-
-        start_pos = f'E{final_row}'
-        end_pos = f'G{final_row + 4}'
-
-        return [start_pos, end_pos]
-
-    def update_5_sheet(self, in_data):
-        final_row = self.end_row + 1
-
-        start_pos = f'E{final_row}'
-        end_pos = f'G{final_row + 4}'
-        self.sheet.update(f'{start_pos}:{end_pos}', in_data)
+        # 멤버 총원
+        self.total_member = len(self.worker_info)
+        ret = self.data_validation(self.sheet8)
+        return ret
 
     def get_worker_nickname(self):
         worker_nickname = []
@@ -154,5 +120,71 @@ class ExcelClass:
                 break
         return ret
 
+    # SHEET5 와 관련 함수들
+    def read_gspread_sheet5(self):
+        gc = gspread.service_account(filename=PATH)
+        # self.doc = gc.open('Season.2022.SPRING')
+        spreadsheet_url = 'https://docs.google.com/spreadsheets/d/1DI5VKpTVu96r4gdvGvTeQOA5GArmhT-uUFDIR4fmdi0/edit#gid=352469473'
+        doc = gc.open_by_url(spreadsheet_url)
+        try:
+            self.sheet5 = doc.worksheet(SHEET5)
+        except Exception as e:
+            print("오류 발생 - sheet 명칭 확인", e)
+            return
+
+        self.end_row = next_available_row(self.sheet5, 5) - 1  # 5 => E열
+        # 마지막 행에 적혀 있는 문구 (ex] 4.24 내전50)
+        last_text = self.sheet5.cell(self.end_row, 5).value
+        tmp = last_text.split('내전')
+        last_cnt = tmp[1]
+        if last_cnt.isdigit():
+            final_cnt = str(int(last_cnt) + 1)
+        else:
+            final_cnt = "xx"
+
+        # now = datetime.now()
+        # if now.hour < 6:
+        #     base_date = date.today() - timedelta(1)
+        # else:
+        #     base_date = date.today()
+
+        # kbeekim) 그냥 당일 날짜로 하자
+        base_date = date.today()
+        final_date = base_date.strftime('%m.%d')
+
+        self.final_date_text = f'{final_date} 내전{final_cnt}'
+
+    def get_update_cell_pos(self):
+        final_row = self.end_row + 1
+
+        start_pos = f'E{final_row}'
+        end_pos = f'G{final_row + 4}'
+
+        return [start_pos, end_pos]
+
+    def update_5_sheet(self, in_data):
+        final_row = self.end_row + 1
+
+        start_pos = f'E{final_row}'
+        end_pos = f'G{final_row + 4}'
+
+        self.sheet5.update(f'{start_pos}:{end_pos}', in_data)
+
     def get_last_date_text(self):
         return self.final_date_text
+
+    # SHEET4 와 관련 함수들
+    def read_gspread_sheet4(self):
+        gc = gspread.service_account(filename=PATH)
+        # self.doc = gc.open('Season.2022.SPRING')
+        spreadsheet_url = 'https://docs.google.com/spreadsheets/d/1DI5VKpTVu96r4gdvGvTeQOA5GArmhT-uUFDIR4fmdi0/edit#gid=352469473'
+        doc = gc.open_by_url(spreadsheet_url)
+        try:
+            self.sheet4 = doc.worksheet(SHEET4)
+        except Exception as e:
+            print("오류 발생 - sheet 명칭 확인", e)
+            return
+
+        sheet4_data = self.sheet4.get_all_values()
+
+        print(sheet4_data)
