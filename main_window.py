@@ -8,6 +8,7 @@ from PyQt5.QtWidgets import QPushButton
 from PyQt5 import uic
 from PyQt5.QtWidgets import *
 import excel
+import main_second_window
 import soldier_window
 from playerinfo import *
 from main import resource_path, DEFINE_EVENT_MODE
@@ -83,6 +84,9 @@ class WindowClass(QMainWindow, form_class):
                 self.player_btn_list[turn].clicked.connect(self.clicked_player_btn)
                 self.gridLayout.addWidget(self.player_btn_list[turn], x, y)
 
+        tab2 = main_second_window.SecondWindow(self)
+        self.tabWidget.addTab(tab2, '데이터 확인')
+        
         # 초기화 버튼
         self.clear_btn.clicked.connect(self.clicked_clear_btn)
         self.clear_btn.setStyleSheet(
@@ -243,8 +247,9 @@ class WindowClass(QMainWindow, form_class):
 
         if ret == PLAYER_INFO_TEAM_BUILD_SUCCESS:
             self.show_message("성공!!!", STATUS_BAR_TYPE_WARN, STATUS_BAR_TIMEOUT_WARN_SHORT)
-
             self.team = team_window.TeamWindow(self.pl.get_team_info(), self.pl.get_all_player_info())
+            # kbeekim) team window 종료 후, 시트 load 한다.
+            self.team.team_window_closed.connect(self.clicked_load_btn)
             self.team.show()
         else:
             self.check_error_code_to_msg(ret)

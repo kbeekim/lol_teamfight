@@ -1,13 +1,15 @@
 from asyncio import sleep
+from functools import partial
 
 from PyQt5 import uic
 from PyQt5.QtCore import *
 
-from PyQt5.QtWidgets import QDialog, QPushButton, QTableWidgetItem
+from PyQt5.QtWidgets import QDialog, QPushButton, QTableWidgetItem, QButtonGroup
 from PyQt5.QtGui import QDragEnterEvent, QDrag, QPixmap
 from PyQt5.QtGui import QDropEvent
 
 import excel
+import champ_window
 from main import resource_path, DEFINE_MASTER_MODE
 from main import DEFINE_DEBUG_MODE
 from popup import ValvePopup, POPUP_TYPE_OK
@@ -20,7 +22,6 @@ excel_data = excel.ExcelClass()
 
 
 class DragButton(QPushButton):
-
     def mouseMoveEvent(self, e):
         if e.buttons() == Qt.LeftButton:
             drag = QDrag(self)
@@ -34,6 +35,8 @@ class DragButton(QPushButton):
 
 
 class TeamWindow(QDialog, form_class):
+    team_window_closed = pyqtSignal()
+
     def __init__(self, team_info, player_info):
         super().__init__()
         self.setupUi(self)
@@ -44,10 +47,11 @@ class TeamWindow(QDialog, form_class):
         # windowModality 설정을 NonModal -> ApplicationModal 으로 설정하여 해당 창을 종료 전까지 다른 창 사용 못하게 설정
         self.setWindowModality(Qt.ApplicationModal)
 
+        self.champ_win = None
+
         self.team_info = team_info
         self.player_info = player_info
         self.final_list = []
-        self.discord_str = None
 
         pos_img_list = ["top.png", "jungle.png", "mid.png", "bottom.png", "support.png"]
 
@@ -58,15 +62,22 @@ class TeamWindow(QDialog, form_class):
         self.sup_label.setPixmap(QPixmap(resource_path(pos_img_list[4], '/img/')))
 
         self.tableWidget.setRowCount(5)
-        self.tableWidget.setColumnCount(3)
+        self.tableWidget.setColumnCount(5)
 
         self.set_text_ui()
 
         self.team1_win_btn.clicked.connect(self.clicked_team1_win_btn)
         self.team2_win_btn.clicked.connect(self.clicked_team2_win_btn)
-
         self.upload_btn.clicked.connect(self.clicked_upload_btn)
         self.close_btn.clicked.connect(self.clicked_close_btn)
+
+        for idx in range(self.teamALayout.count()):  # 5명
+            self.teamALayout.itemAt(idx).widget().clicked.connect(partial(self.clicked_champ_btn, self.teamALayout.itemAt(idx).widget()))
+            self.teamBLayout.itemAt(idx).widget().clicked.connect(partial(self.clicked_champ_btn, self.teamBLayout.itemAt(idx).widget()))
+
+    def closeEvent(self, event):
+        event.accept()
+        # self.team_window_closed.emit()
 
     def dragEnterEvent(self, e):
         e.accept()
@@ -174,6 +185,10 @@ class TeamWindow(QDialog, form_class):
         if DEFINE_DEBUG_MODE:
             print("[kb.debug] 최종 팀결성 결과")
             print(self.discord_str)
+
+    def clicked_champ_btn(self, btn):
+        self.champ_win = champ_window.ChampWindow(btn)
+        self.champ_win.show()
 
     def clicked_team1_win_btn(self):
         self.show_team_data(1)
