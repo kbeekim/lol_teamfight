@@ -1,5 +1,6 @@
 import itertools
 import os
+import random
 import sys
 
 from PyQt5.QtCore import Qt
@@ -28,7 +29,7 @@ STATUS_BAR_TYPE_NORMAL = 0
 STATUS_BAR_TYPE_WARN = 1
 
 MAJOR_VERSION = 0
-MINOR_VERSION = 4
+MINOR_VERSION = 5
 
 UI_FILE_NAME = 'main_window.ui'
 
@@ -191,10 +192,10 @@ class WindowClass(QMainWindow, form_class):
                 item = self.worker_list_widget.findItems(tmp_nick, Qt.MatchExactly)
                 if len(item) > 0:
                     self.insert_worker_to_player(item, PLAYER_FLAG_NORMAL)
-            w = ValvePopup(POPUP_TYPE_OK, "MMR 로드 성공!")
+            w = ValvePopup(POPUP_TYPE_OK, "확인창", "MMR 로드 성공!")
             w.show()
         else:
-            w = ValvePopup(POPUP_TYPE_OK, "MMR 로드 실패!")
+            w = ValvePopup(POPUP_TYPE_OK, "확인창", "MMR 로드 실패!")
             w.show()
 
     def clicked_search_clear_btn(self):
@@ -202,7 +203,7 @@ class WindowClass(QMainWindow, form_class):
 
     def refresh_player_cnt(self):
         cnt = self.pl.get_player_cnt()
-        if DEFINE_EVENT_MODE:
+        if DEFINE_EVENT_MODE:  # 싸베 버그
             self.player_cnt_label.setText(str(8) + "/" + str(MAX_PLAYER_CNT))
             self.player_cnt_label.setStyleSheet(
                 "color: red;"
@@ -248,11 +249,15 @@ class WindowClass(QMainWindow, form_class):
         if ret == PLAYER_INFO_TEAM_BUILD_SUCCESS:
             self.show_message("성공!!!", STATUS_BAR_TYPE_WARN, STATUS_BAR_TIMEOUT_WARN_SHORT)
             self.team = team_window.TeamWindow(self.pl.get_team_info(), self.pl.get_all_player_info())
-            # kbeekim) team window 종료 후, 시트 load 한다.
-            self.team.team_window_closed.connect(self.clicked_load_btn)
+
             self.team.show()
+            # kbeekim) team window 종료 후, 행정
+            self.team.team_window_closed.connect(self.after_team_window)
         else:
             self.check_error_code_to_msg(ret)
+
+    def after_team_window(self):
+        del self.team
 
     def clicked_insert_soldier_btn(self):
         if self.pl.get_player_cnt() == MAX_PLAYER_CNT:
@@ -311,6 +316,9 @@ class WindowClass(QMainWindow, form_class):
             worker_info_list.append(excel_data.get_worker_info_by_nickname(workers[i].text()))
         ret = self.pl.set_player_info(worker_info_list, player_flag)
 
+        if DEFINE_EVENT_MODE: # 준꿀 버그
+            find_junehoney = False
+            
         if isinstance(ret, list):
             player_idx_list = ret
             # return 값으로 player_list 의 idx를 받아 온다.
@@ -318,21 +326,23 @@ class WindowClass(QMainWindow, form_class):
                 worker_name = worker_info_list[i]['NICKNAME']  # 연계
                 tmp = f'{worker_name}\n({worker_info_list[i]["MMR"]})'
 
-                # kbeekim) 우선 MMR 표시로
-                # if player_flag == PLAYER_FLAG_GROUP:
-                    # tmp = f'{worker_name}\n(그룹)'
-                    # self.set_style_player_btn(player_idx, tmp, PLAYER_FLAG_GROUP)
-                # elif player_flag == PLAYER_FLAG_DIVISION:
-                    # tmp = f'{worker_name}\n(분할)'
-                    # self.set_style_player_btn(player_idx, tmp, PLAYER_FLAG_DIVISION)
-                # else:
-                #     self.set_style_player_btn(player_idx, tmp, PLAYER_FLAG_NORMAL)
+                if DEFINE_EVENT_MODE:  # 준꿀 버그
+                    if worker_name == "준꿀":
+                        find_junehoney = True
+
                 self.set_style_player_btn(player_idx, tmp, player_flag)
 
             # 성공했으니 list 비활성화
             for i in range(len(workers)):
                 workers[i].setFlags(Qt.NoItemFlags)
             self.refresh_player_cnt()
+
+            if DEFINE_EVENT_MODE: # 준꿀 버그
+                if (find_junehoney):
+                    if random.randint(1, 50) == 1:
+                        w = ValvePopup(POPUP_TYPE_OK, "준꿀 버그", "ㄱㄱㄱㄱㄱㄱ?")
+                        w.show()
+
         elif isinstance(ret, int):
             self.check_error_code_to_msg(ret)
         else:

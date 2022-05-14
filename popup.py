@@ -9,17 +9,17 @@ class ValvePopup(QWidget):
     # Signal 선언부
     send_valve_popup_signal = pyqtSignal(bool, name='sendValvePopupSignal')
 
-    def __init__(self, popup_type, popup_str, parent=None):
+    def __init__(self, popup_type, popup_name, popup_str, parent=None):
         QWidget.__init__(self, parent)
         # self.accept_button = QPushButton()
         # self.cancel_button = QPushButton()
-        self.init_ui(popup_type, popup_str)
+        self.init_ui(popup_type, popup_name, popup_str)
 
-    def init_ui(self, popup_type, popup_str):
+    def init_ui(self, popup_type, popup_name, popup_str):
         if popup_type == POPUP_TYPE_OK:
-            self.show_popup_ok("확인창", popup_str)
+            self.show_popup_ok(popup_name, popup_str)
         elif popup_type == POPUP_TYPE_OK_CANCEL:
-            self.show_popup_ok_cancel("확인창", popup_str)
+            self.show_popup_ok_cancel(popup_name, popup_str)
 
     def show_popup_ok(self, title: str, content: str):
         msg_box = QMessageBox()
