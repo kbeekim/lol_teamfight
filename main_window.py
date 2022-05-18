@@ -2,8 +2,9 @@ import itertools
 import os
 import random
 import sys
+from functools import partial
 
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, pyqtSlot
 from PyQt5.QtGui import QFont, QIcon
 from PyQt5.QtWidgets import QPushButton
 from PyQt5 import uic
@@ -11,10 +12,11 @@ from PyQt5.QtWidgets import *
 import excel
 import main_second_window
 import soldier_window
+import team_window
 from playerinfo import *
-from main import resource_path, DEFINE_EVENT_MODE
-from main import DEFINE_DEBUG_MODE
 from popup import ValvePopup, POPUP_TYPE_OK
+from global_settings import *
+from thread import Thread
 
 WORKER_ORDER_FREQUENCY = 0
 WORKER_ORDER_ALPHABET = 1
@@ -28,15 +30,10 @@ STATUS_BAR_TIMEOUT_WARN_LONG = 3000
 STATUS_BAR_TYPE_NORMAL = 0
 STATUS_BAR_TYPE_WARN = 1
 
-MAJOR_VERSION = 0
-MINOR_VERSION = 5
-
 UI_FILE_NAME = 'main_window.ui'
-
 
 PATH = resource_path(UI_FILE_NAME, '/img/ui/')
 form_class = uic.loadUiType(PATH)[0]
-# form_class = uic.loadUiType(PATH)[0]
 excel_data = excel.ExcelClass()
 
 
@@ -47,9 +44,11 @@ class WindowClass(QMainWindow, form_class):
 
     def __init__(self):
         super().__init__()
+        self.pd = None
+        self.excel_thread = None
         self.setupUi(self)
 
-        version = f'v{MAJOR_VERSION}.{MINOR_VERSION}'
+        version = f'v{G_MAJOR_VERSION}.{G_MINOR_VERSION}_fix'
         self.setWindowTitle("롤 인력사무소 " + version)
 
         # excel data load
@@ -173,12 +172,31 @@ class WindowClass(QMainWindow, form_class):
                 continue
             tmp_list.append(dix['NICKNAME'])
 
-        if DEFINE_DEBUG_MODE:
+        if G_DEFINE_DEBUG_MODE:
             print("[kb.debug] load btn 시, 기존 tmp list : " + str(tmp_list))
 
-        if excel_data.read_gspread_sheet8():
-            self.clicked_clear_btn()
+        self.pd = QProgressDialog("데이터를 로딩 중 입니다.", None, 0, 0)
+        self.pd.setWindowModality(Qt.ApplicationModal)
 
+        self.pd.setWindowTitle(g_get_lol_random_speech_str())
+        self.pd.setMinimumWidth(600)
+        self.pd.show()
+
+        self.excel_thread = Thread(excel_data, G_THREAD_READ_8)
+        self.excel_thread.start()
+        self.excel_thread.end_thread_signal.connect(partial(self.after_end_excel_thread, tmp_list))
+
+    @pyqtSlot(bool)
+    def after_end_excel_thread(self, tmp_list, excel_result):
+        # kbeekim) 굳이 소멸 시키지 않아도 다음번 thread 생성 시, 자동 소멸이 된다.
+        # 오히려 두 번 소멸 된다고 떠서 주석 처리..
+        # self.excel_thread.delete()
+        
+        # progress dialog 취소
+        self.pd.cancel()
+
+        if excel_result:
+            self.clicked_clear_btn()
             if self.frequency_order_radio_btn.isChecked():
                 self.load_worker_list(WORKER_ORDER_FREQUENCY)
             elif self.alphabet_order_radio_btn.isChecked():
@@ -192,18 +210,17 @@ class WindowClass(QMainWindow, form_class):
                 item = self.worker_list_widget.findItems(tmp_nick, Qt.MatchExactly)
                 if len(item) > 0:
                     self.insert_worker_to_player(item, PLAYER_FLAG_NORMAL)
-            w = ValvePopup(POPUP_TYPE_OK, "확인창", "MMR 로드 성공!")
-            w.show()
+
+            ValvePopup(POPUP_TYPE_OK, "확인창", "MMR 로드 성공!")
         else:
-            w = ValvePopup(POPUP_TYPE_OK, "확인창", "MMR 로드 실패!")
-            w.show()
+            ValvePopup(POPUP_TYPE_OK, "확인창", "MMR 로드 실패!")
 
     def clicked_search_clear_btn(self):
         self.search_edit.setText("")
 
     def refresh_player_cnt(self):
         cnt = self.pl.get_player_cnt()
-        if DEFINE_EVENT_MODE:  # 싸베 버그
+        if G_DEFINE_EVENT_MODE:  # 싸베 버그
             self.player_cnt_label.setText(str(8) + "/" + str(MAX_PLAYER_CNT))
             self.player_cnt_label.setStyleSheet(
                 "color: red;"
@@ -316,7 +333,7 @@ class WindowClass(QMainWindow, form_class):
             worker_info_list.append(excel_data.get_worker_info_by_nickname(workers[i].text()))
         ret = self.pl.set_player_info(worker_info_list, player_flag)
 
-        if DEFINE_EVENT_MODE: # 준꿀 버그
+        if G_DEFINE_EVENT_MODE: # 준꿀 버그
             find_junehoney = False
             
         if isinstance(ret, list):
@@ -326,7 +343,7 @@ class WindowClass(QMainWindow, form_class):
                 worker_name = worker_info_list[i]['NICKNAME']  # 연계
                 tmp = f'{worker_name}\n({worker_info_list[i]["MMR"]})'
 
-                if DEFINE_EVENT_MODE:  # 준꿀 버그
+                if G_DEFINE_EVENT_MODE:  # 준꿀 버그
                     if worker_name == "준꿀":
                         find_junehoney = True
 
@@ -337,11 +354,10 @@ class WindowClass(QMainWindow, form_class):
                 workers[i].setFlags(Qt.NoItemFlags)
             self.refresh_player_cnt()
 
-            if DEFINE_EVENT_MODE: # 준꿀 버그
+            if G_DEFINE_EVENT_MODE: # 준꿀 버그
                 if (find_junehoney):
                     if random.randint(1, 50) == 1:
-                        w = ValvePopup(POPUP_TYPE_OK, "준꿀 버그", "ㄱㄱㄱㄱㄱㄱ?")
-                        w.show()
+                        ValvePopup(POPUP_TYPE_OK, "준꿀 버그", "ㄱㄱㄱㄱㄱㄱ?")
 
         elif isinstance(ret, int):
             self.check_error_code_to_msg(ret)

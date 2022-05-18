@@ -1,26 +1,35 @@
 from asyncio import sleep
 from functools import partial
-from random import random
+import random
 
 from PyQt5 import uic, QtWidgets
 from PyQt5.QtCore import *
 
-from PyQt5.QtWidgets import QDialog, QPushButton, QTableWidgetItem, QButtonGroup, QTabWidget
-from PyQt5.QtGui import QDragEnterEvent, QDrag, QPixmap
-from PyQt5.QtGui import QDropEvent
-from asyncqt import QtGui, QtCore
+from PyQt5.QtWidgets import QDialog, QPushButton, QTableWidgetItem, QTabWidget, QHBoxLayout, QButtonGroup, QGroupBox, \
+    QProgressDialog
+from PyQt5.QtGui import QDragEnterEvent, QDrag, QPixmap, QFont
 
 import excel
 import champ_window
-from main import resource_path, DEFINE_MASTER_MODE
-from main import DEFINE_DEBUG_MODE
 from popup import ValvePopup, POPUP_TYPE_OK
+from global_settings import *
+from thread import Thread
 
 UI_FILE_NAME = 'team_window.ui'
 
 PATH = resource_path(UI_FILE_NAME, '/img/ui/')
 form_class = uic.loadUiType(PATH)[0]
 excel_data = excel.ExcelClass()
+
+WIN_TEAM_A = 1
+WIN_TEAM_B = 2
+
+# kbeekim) 버튼이 추가된다면 값을 변경해줘야함
+TEAM_A_PLAYER_IDX = 0
+TEAM_A_CHAMP_IDX = 1
+
+TEAM_B_PLAYER_IDX = 1
+TEAM_B_CHAMP_IDX = 0
 
 
 class DragButton(QPushButton):
@@ -36,11 +45,42 @@ class DragButton(QPushButton):
             drag.exec_(Qt.MoveAction)
 
 
+def make_btn(is_draggable, width, text_size, text):
+    if is_draggable:
+        btn = DragButton()
+    else:
+        btn = QPushButton()
+
+    btn.setMaximumHeight(56)  # 버튼 높이 강제 조절
+
+    if width is not None:
+        btn.setMaximumWidth(width)  # 버튼 너비 강제 조절
+
+    btn.setText(text)
+
+    btn.setStyleSheet("""
+        QPushButton {
+            color: white;
+            background-color: black; 
+        }
+        QPushButton:hover {
+            color: #ff7f50;
+        }
+    """)
+
+    if text_size is not None:
+        btn.setFont(QFont("Noto_Sans", text_size))
+
+    return btn
+
+
 class TeamWindow(QDialog, form_class):
     team_window_closed = pyqtSignal()
 
     def __init__(self, team_info, player_info):
         super().__init__()
+        self.excel_thread = None
+        self.progress_dialog = None
         self.setupUi(self)
         self.setWindowTitle("팀 결과")
         self.setAcceptDrops(True)
@@ -59,6 +99,8 @@ class TeamWindow(QDialog, form_class):
         self.sh5_upload_list = []
         self.sh4_upload_win_list = []
         self.sh4_upload_lose_list = []
+        # 챔피언 중복 초기화
+        g_clear_champion_clicked()
 
         pos_img_list = ["top.png", "jungle.png", "mid.png", "bottom.png", "support.png"]
         self.top_label.setPixmap(QPixmap(resource_path(pos_img_list[0], '/img/')))
@@ -74,7 +116,8 @@ class TeamWindow(QDialog, form_class):
         self.tabs.addTab(self.log_edit, "팀 로그")
         self.result_vlayout.addWidget(self.tabs)
 
-        self.set_text_ui()
+        self.set_btn_layout()
+        self.set_log_layout()
 
         self.tableWidget.setRowCount(5)
         self.tableWidget.setColumnCount(5)
@@ -85,8 +128,11 @@ class TeamWindow(QDialog, form_class):
         self.close_btn.clicked.connect(self.clicked_close_btn)
 
         for idx in range(self.teamALayout.count()):  # 5명
-            self.teamALayout.itemAt(idx).widget().clicked.connect(partial(self.clicked_champ_btn, self.teamALayout.itemAt(idx).widget()))
-            self.teamBLayout.itemAt(idx).widget().clicked.connect(partial(self.clicked_champ_btn, self.teamBLayout.itemAt(idx).widget()))
+            # self.teamALayout.itemAt(idx).itemAt(TEAM_A_PLAYER_IDX).widget().clicked.connect(partial(self.clicked_champ_btn, self.teamALayout.itemAt(idx).itemAt(TEAM_A_CHAMP_IDX).widget()))
+            self.teamALayout.itemAt(idx).itemAt(TEAM_A_CHAMP_IDX).widget().clicked.connect(partial(self.clicked_champ_btn, self.teamALayout.itemAt(idx).itemAt(TEAM_A_CHAMP_IDX).widget()))
+
+            # self.teamALayout.itemAt(idx).itemAt(TEAM_B_PLAYER_IDX).widget().clicked.connect(partial(self.clicked_champ_btn, self.teamALayout.itemAt(idx).itemAt(TEAM_A_CHAMP_IDX).widget()))
+            self.teamBLayout.itemAt(idx).itemAt(TEAM_B_CHAMP_IDX).widget().clicked.connect(partial(self.clicked_champ_btn, self.teamBLayout.itemAt(idx).itemAt(TEAM_B_CHAMP_IDX).widget()))
 
         # 기본은 4, 5 시트 동시 입력
         self.sh45_both_upload_radio_btn.click()
@@ -99,83 +145,102 @@ class TeamWindow(QDialog, form_class):
         e.accept()
 
     def dropEvent(self, e):
-        TEAM_A = 0
-        TEAM_B = 1
+        src_n = 0
+        src_w = None
+        TEAM_A, TEAM_B = 0, 1
         pos = e.pos()
-        src_w = e.source()
+        clicked_w = e.source() # DragButton
         team = None
 
-        for n in range(self.teamALayout.count()):
-            if self.teamALayout.itemAt(n).widget() == src_w:
+        for n in range(5):
+            if self.teamALayout.itemAt(n).itemAt(TEAM_A_PLAYER_IDX).widget() == clicked_w or self.teamALayout.itemAt(n).itemAt(TEAM_A_CHAMP_IDX).widget() == clicked_w:
                 team = TEAM_A
                 src_n = n
                 break
-            if self.teamBLayout.itemAt(n).widget() == src_w:
+            if self.teamBLayout.itemAt(n).itemAt(TEAM_B_PLAYER_IDX).widget() == clicked_w or self.teamBLayout.itemAt(n).itemAt(TEAM_B_CHAMP_IDX).widget() == clicked_w :
                 team = TEAM_B
                 src_n = n
                 break
 
         if team == TEAM_A:
-            if pos.x() <= 289 and pos.y() <= 361:
-                for n in range(self.teamALayout.count()):
-                    w = self.teamALayout.itemAt(n).widget()
-
+            if pos.x() <= 480 and pos.y() <= 380:
+                for n in range(5):
+                    w = self.teamALayout.itemAt(n).itemAt(TEAM_A_PLAYER_IDX).widget()
                     if pos.y() <= w.y() + w.size().height():
-                        self.teamALayout.insertWidget(n, src_w)
-                        self.teamALayout.insertWidget(src_n, w)
+                        # if G_DEFINE_DEBUG_MODE:
+                            # print(f"n : {n} [3] src_w : {src_w}")
+                            # print(f"src_n : {src_n} [3] w : {w}")
+
+                        # kbeekim) insertLayout 을 통해 바뀌는게 잘안된다..
+                        # self.teamALayout.insertLayout(n, src_w)
+                        # self.teamALayout.insertLayout(src_n, w)
+
+                        for cnt in range(self.teamALayout.itemAt(n).count()):
+                            tmp = self.teamALayout.itemAt(n).itemAt(cnt).widget()
+                            self.teamALayout.itemAt(n).insertWidget(cnt, self.teamALayout.itemAt(src_n).itemAt(cnt).widget())
+                            self.teamALayout.itemAt(src_n).insertWidget(cnt, tmp)
+
                         break
             else:
-                w = ValvePopup(POPUP_TYPE_OK, "확인창", "1팀 안에서의 이동만 가능합니다.")
-                w.show()
+                ValvePopup(POPUP_TYPE_OK, "확인창", "1팀 안에서의 이동만 가능합니다.")
 
         elif team == TEAM_B:
-            if 363 <= pos.x() <= 649 and pos.y() <= 361:
-                for n in range(self.teamBLayout.count()):
-                    w = self.teamBLayout.itemAt(n).widget()
-
+            if 550 <= pos.x() <= 1020 and pos.y() <= 380:
+                for n in range(5):
+                    w = self.teamBLayout.itemAt(n).itemAt(TEAM_B_PLAYER_IDX).widget()
                     if pos.y() <= w.y() + w.size().height():
-                        self.teamBLayout.insertWidget(n, src_w)
-                        self.teamBLayout.insertWidget(src_n, w)
+
+                        for cnt in range(self.teamBLayout.itemAt(n).count()):
+                            tmp = self.teamBLayout.itemAt(n).itemAt(cnt).widget()
+                            self.teamBLayout.itemAt(n).insertWidget(cnt, self.teamBLayout.itemAt(src_n).itemAt(cnt).widget())
+                            self.teamBLayout.itemAt(src_n).insertWidget(cnt, tmp)
                         break
             else:
-                w = ValvePopup(POPUP_TYPE_OK, "확인창", "2팀 안에서의 이동만 가능합니다.")
-                w.show()
+                ValvePopup(POPUP_TYPE_OK, "확인창", "2팀 안에서의 이동만 가능합니다.")
         else:
-            w = ValvePopup(POPUP_TYPE_OK, "확인창", "알 수 없는 에러 (개발자에게 신고하세요.)")
+            ValvePopup(POPUP_TYPE_OK, "확인창", "알 수 없는 에러 (개발자에게 신고하세요.)")
 
-        # if DEFINE_DEBUG_MODE:
-        # print(f'pos x, y : {pos.x()}, {pos.y()}')
+        if G_DEFINE_DEBUG_MODE:
+            print(f'pos x, y : {pos.x()}, {pos.y()}')
         e.accept()
 
-    def set_text_ui(self):
+    def set_btn_layout(self):
+        teamA_list = self.team_info[0]
+        teamB_list = self.team_info[2]
+
+        line_list = ['Test0', 'Test1', 'Test2', 'Test3', 'Test4']
+        for idx, line in enumerate(line_list):
+            h_layout = QHBoxLayout()
+            #kb.todo 자주 사용하는 챔피언
+            # h_layout.addWidget(make_btn(False, 56, None, "1"))
+            # h_layout.addWidget(make_btn(False, 56, None, "2"))
+            # h_layout.addWidget(make_btn(False, 56, None, "3"))
+
+            h_layout.addWidget(
+                make_btn(True, None, 13, self.get_nickname(teamA_list[idx])))
+            h_layout.addWidget(make_btn(True, 180, 10, "(챔피언 입력)"))
+
+            self.teamALayout.addLayout(h_layout)
+
+        for idx, line in enumerate(line_list):
+            h_layout = QHBoxLayout()
+
+            h_layout.addWidget(make_btn(True, 180, 10, "(챔피언 입력)"))
+            h_layout.addWidget(
+                make_btn(True, None, 13, self.get_nickname(teamB_list[idx])))
+            #kb.todo 자주 사용하는 챔피언
+            # h_layout.addWidget(make_btn(False, 56, None, "1"))
+            # h_layout.addWidget(make_btn(False, 56, None, "2"))
+            # h_layout.addWidget(make_btn(False, 56, None, "3"))
+
+            self.teamBLayout.addLayout(h_layout)
+
+    def set_log_layout(self):
         teamA_list = self.team_info[0]
         teamA_sum = self.team_info[1]
-        # teamA_mmr = round(self.team_info[1] / 5, 1)
 
         teamB_list = self.team_info[2]
         teamB_sum = self.team_info[3]
-        # teamB_mmr = round(self.team_info[3] / 5, 1)
-
-        line_list = ['TOP', 'JUG', 'MID', 'ADC', 'SUP']
-        for idx, line in enumerate(line_list):
-            btn = DragButton(line)
-            btn.setMaximumHeight(56)  # 버튼 높이 강제 조절
-            btn.setText(self.get_nickname(teamA_list[idx]) + "\n(" + str(self.get_mmr(teamA_list[idx])) + ")")
-            btn.setStyleSheet(
-                "color: white;"
-                "background-color: black;"
-            )
-            self.teamALayout.addWidget(btn)
-
-        for idx, line in enumerate(line_list):
-            btn = DragButton(line)
-            btn.setMaximumHeight(56)  # 버튼 높이 강제 조절
-            btn.setText(self.get_nickname(teamB_list[idx]) + "\n(" + str(self.get_mmr(teamB_list[idx])) + ")")
-            btn.setStyleSheet(
-                "color: white;"
-                "background-color: black;"
-            )
-            self.teamBLayout.addWidget(btn)
 
         log_str = f"1팀: 합계 [{teamA_sum}]\n"
         for i in teamA_list:
@@ -196,7 +261,7 @@ class TeamWindow(QDialog, form_class):
         result_txt = "~~~~~~~~~.\n" + str_1 + "\n" + str_2
         self.team_edit.setText(result_txt)
 
-        if DEFINE_DEBUG_MODE:
+        if G_DEFINE_DEBUG_MODE:
             print("[kb.debug] 최종 팀결성 결과")
             print(log_str)
             print(result_txt)
@@ -206,38 +271,48 @@ class TeamWindow(QDialog, form_class):
         self.champ_input.show()
 
     def clicked_team1_win_btn(self):
-        self.show_team_data(1)
+        self.show_team_data(WIN_TEAM_A)
 
     def clicked_team2_win_btn(self):
-        self.show_team_data(2)
+        self.show_team_data(WIN_TEAM_B)
 
     def show_team_data(self, win_team):
-        excel_data.read_gspread_sheet5()
-        excel_data.read_gspread_sheet4()
+        self.progress_dialog = QProgressDialog("데이터를 준비하는 중 입니다.", None, 0, 0)
+        self.progress_dialog.setWindowModality(Qt.ApplicationModal)
+        self.progress_dialog.setWindowTitle(g_get_lol_random_speech_str())
+        self.progress_dialog.setMinimumWidth(600)
+        self.progress_dialog.show()
+
+        self.excel_thread = Thread(excel_data, G_THREAD_READ_4_5)
+        self.excel_thread.start()
+        self.excel_thread.end_thread_signal.connect(partial(self.after_end_excel_thread, win_team))
+
+    @pyqtSlot(bool)
+    def after_end_excel_thread(self, win_team, excel_result):
+        self.progress_dialog.cancel()
 
         # kb.todo sh4 날짜는?
         date_text = excel_data.get_sh5_last_date_text()
         self.sh5_upload_list.clear()
         self.sh4_upload_win_list.clear()
         self.sh4_upload_lose_list.clear()
-
         champ_input_complete = True
 
-        for n in range(self.teamALayout.count()):  # 5명
+        for n in range(5):  # 한 팀 5명
             self.tableWidget.setItem(n, 0, QTableWidgetItem(date_text))
 
-            if win_team == 1:
-                nick_win = self.teamALayout.itemAt(n).widget().text().splitlines()[0]
-                champ_win = self.teamALayout.itemAt(n).widget().text().splitlines()[1]
+            if win_team == WIN_TEAM_A:
+                nick_win = self.teamALayout.itemAt(n).itemAt(TEAM_A_PLAYER_IDX).widget().text()
+                champ_win = self.teamALayout.itemAt(n).itemAt(TEAM_A_CHAMP_IDX).widget().text()
 
-                nick_lose = self.teamBLayout.itemAt(n).widget().text().splitlines()[0]
-                champ_lose = self.teamBLayout.itemAt(n).widget().text().splitlines()[1]
-            elif win_team == 2:
-                nick_win = self.teamBLayout.itemAt(n).widget().text().splitlines()[0]
-                champ_win = self.teamBLayout.itemAt(n).widget().text().splitlines()[1]
+                nick_lose = self.teamBLayout.itemAt(n).itemAt(TEAM_B_PLAYER_IDX).widget().text()
+                champ_lose = self.teamBLayout.itemAt(n).itemAt(TEAM_B_CHAMP_IDX).widget().text()
+            elif win_team == WIN_TEAM_B:
+                nick_win = self.teamBLayout.itemAt(n).itemAt(TEAM_B_PLAYER_IDX).widget().text()
+                champ_win = self.teamBLayout.itemAt(n).itemAt(TEAM_B_CHAMP_IDX).widget().text()
 
-                nick_lose = self.teamALayout.itemAt(n).widget().text().splitlines()[0]
-                champ_lose = self.teamALayout.itemAt(n).widget().text().splitlines()[1]
+                nick_lose = self.teamALayout.itemAt(n).itemAt(TEAM_A_PLAYER_IDX).widget().text()
+                champ_lose = self.teamALayout.itemAt(n).itemAt(TEAM_A_CHAMP_IDX).widget().text()
 
             self.tableWidget.setItem(n, 1, QTableWidgetItem(nick_win))
             self.tableWidget.setItem(n, 2, QTableWidgetItem(champ_win))
@@ -249,31 +324,28 @@ class TeamWindow(QDialog, form_class):
             self.sh4_upload_win_list.append([nick_win, champ_win])
             self.sh4_upload_lose_list.append([nick_lose, champ_lose])
 
-            if not ((champ_lose in champ_window.CHAMPION) and (champ_win in champ_window.CHAMPION)):
+            if not ((champ_lose in G_CHAMPION) and (champ_win in G_CHAMPION)):
                 champ_input_complete = False
 
         # Check Validation
         if not champ_input_complete:
             tmp_str = "챔피언 입력 필요"
             self.update_champ_ready = False
-        elif win_team == 1:
+        elif win_team == WIN_TEAM_A:
             tmp_str = "1팀 승리!\n입력 준비 완료"
             self.update_champ_ready = True
-        elif win_team == 2:
+        elif win_team == WIN_TEAM_B:
             tmp_str = "2팀 승리!\n입력 준비 완료"
             self.update_champ_ready = True
 
         # kb.todo sheet5 우선은 모두 성공으로 판단
-        w = ValvePopup(POPUP_TYPE_OK, "확인창", tmp_str)
-        w.show()
+        ValvePopup(POPUP_TYPE_OK, "확인창", tmp_str)
 
         self.update_ready = True
-
-        # kb.todo 임시
         self.tmp_label.setText("5시트 입력 위치: " + str(excel_data.get_sh5_update_cell_pos()) +
                                " / 4시트 기준 위치: " + str(excel_data.get_sh4_update_cell_pos()))
 
-        if DEFINE_DEBUG_MODE:
+        if G_DEFINE_DEBUG_MODE:
             print("[kb.debug] gspread 업로드 전, upload_list")
             print(self.sh5_upload_list)
             print(self.sh4_upload_win_list)
@@ -299,26 +371,21 @@ class TeamWindow(QDialog, form_class):
                     excel_data.update_4_sheet(self.sh4_upload_win_list, self.sh4_upload_lose_list)
 
                 # kb.todo sheet5 4 우선은 모두 성공으로 판단
-                w = ValvePopup(POPUP_TYPE_OK, "확인창", "업로드 성공!")
-                w.show()
+                ValvePopup(POPUP_TYPE_OK, "확인창", "업로드 성공!")
 
                 self.close()
             else:
                 if self.sh45_both_upload_radio_btn.isChecked():
-                    w = ValvePopup(POPUP_TYPE_OK, "확인창", "챔피언을 입력해주세요!")
-                    w.show()
+                    ValvePopup(POPUP_TYPE_OK, "확인창", "챔피언을 입력해주세요!")
                 elif self.sh5_upload_radio_btn.isChecked():
-                    # kb.todo 조정 단계로 5시트만 입력가능하도록 함
+                    # kb.todo 조정 단계로 5시트만 입력 가능하도록 함
                     excel_data.update_5_sheet(self.sh5_upload_list)
-                    w = ValvePopup(POPUP_TYPE_OK, "확인창", "다음부턴 챔피언도 입력해 주세요! \n 업로드 성공!")
-                    w.show()
+                    ValvePopup(POPUP_TYPE_OK, "확인창", "다음부턴 챔피언도 입력해 주세요! \n 업로드 성공!")
                     self.close()
                 elif self.sh4_upload_radio_btn.isChecked():
-                    w = ValvePopup(POPUP_TYPE_OK, "확인창", "챔피언을 입력해주세요!")
-                    w.show()
+                    ValvePopup(POPUP_TYPE_OK, "확인창", "챔피언을 입력해주세요!")
         else:
-            w = ValvePopup(POPUP_TYPE_OK, "확인창", "승리 버튼을 눌러 데이터를 확인해주세요")
-            w.show()
+            ValvePopup(POPUP_TYPE_OK, "확인창", "승리 버튼을 눌러 데이터를 확인해주세요")
 
     def clicked_close_btn(self):
         self.close()

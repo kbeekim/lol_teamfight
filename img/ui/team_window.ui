@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>671</width>
-    <height>1100</height>
+    <width>1029</width>
+    <height>947</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -18,20 +18,14 @@
     <rect>
      <x>10</x>
      <y>10</y>
-     <width>651</width>
-     <height>421</height>
+     <width>1011</width>
+     <height>361</height>
     </rect>
    </property>
    <layout class="QGridLayout" name="gridLayout">
     <property name="sizeConstraint">
      <enum>QLayout::SetNoConstraint</enum>
     </property>
-    <item row="0" column="0" rowspan="2">
-     <layout class="QVBoxLayout" name="teamALayout"/>
-    </item>
-    <item row="0" column="2" rowspan="2">
-     <layout class="QVBoxLayout" name="teamBLayout"/>
-    </item>
     <item row="0" column="1" rowspan="2">
      <layout class="QVBoxLayout" name="verticalLayout">
       <property name="sizeConstraint">
@@ -116,45 +110,21 @@
       </item>
      </layout>
     </item>
+    <item row="0" column="2" rowspan="2">
+     <layout class="QVBoxLayout" name="teamBLayout"/>
+    </item>
+    <item row="0" column="0" rowspan="2">
+     <layout class="QVBoxLayout" name="teamALayout"/>
+    </item>
    </layout>
-  </widget>
-  <widget class="QTextEdit" name="team_edit">
-   <property name="geometry">
-    <rect>
-     <x>10</x>
-     <y>610</y>
-     <width>651</width>
-     <height>71</height>
-    </rect>
-   </property>
-   <property name="font">
-    <font>
-     <family>Noto Sans Korean Regular</family>
-    </font>
-   </property>
-  </widget>
-  <widget class="QTextEdit" name="log_edit">
-   <property name="geometry">
-    <rect>
-     <x>10</x>
-     <y>440</y>
-     <width>651</width>
-     <height>161</height>
-    </rect>
-   </property>
-   <property name="font">
-    <font>
-     <family>Noto Sans Korean Regular</family>
-    </font>
-   </property>
   </widget>
   <widget class="QPushButton" name="team1_win_btn">
    <property name="geometry">
     <rect>
-     <x>10</x>
-     <y>690</y>
+     <x>700</x>
+     <y>400</y>
      <width>321</width>
-     <height>41</height>
+     <height>51</height>
     </rect>
    </property>
    <property name="font">
@@ -170,10 +140,10 @@
   <widget class="QPushButton" name="team2_win_btn">
    <property name="geometry">
     <rect>
-     <x>340</x>
-     <y>690</y>
+     <x>700</x>
+     <y>480</y>
      <width>321</width>
-     <height>41</height>
+     <height>51</height>
     </rect>
    </property>
    <property name="font">
@@ -190,9 +160,9 @@
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>1050</y>
-     <width>531</width>
-     <height>41</height>
+     <y>880</y>
+     <width>841</width>
+     <height>61</height>
     </rect>
    </property>
    <property name="font">
@@ -209,19 +179,19 @@
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>740</y>
-     <width>651</width>
-     <height>281</height>
+     <y>550</y>
+     <width>1011</width>
+     <height>251</height>
     </rect>
    </property>
   </widget>
   <widget class="QPushButton" name="close_btn">
    <property name="geometry">
     <rect>
-     <x>550</x>
-     <y>1050</y>
-     <width>111</width>
-     <height>41</height>
+     <x>880</x>
+     <y>880</y>
+     <width>141</width>
+     <height>61</height>
     </rect>
    </property>
    <property name="font">
@@ -237,8 +207,8 @@
   <widget class="QLabel" name="tmp_label">
    <property name="geometry">
     <rect>
-     <x>10</x>
-     <y>910</y>
+     <x>20</x>
+     <y>810</y>
      <width>651</width>
      <height>21</height>
     </rect>
@@ -254,15 +224,68 @@
     <string/>
    </property>
   </widget>
-  <zorder>gridLayoutWidget</zorder>
-  <zorder>team_edit</zorder>
-  <zorder>team1_win_btn</zorder>
-  <zorder>team2_win_btn</zorder>
-  <zorder>upload_btn</zorder>
-  <zorder>tableWidget</zorder>
-  <zorder>log_edit</zorder>
-  <zorder>close_btn</zorder>
-  <zorder>tmp_label</zorder>
+  <widget class="QWidget" name="verticalLayoutWidget_2">
+   <property name="geometry">
+    <rect>
+     <x>20</x>
+     <y>840</y>
+     <width>651</width>
+     <height>41</height>
+    </rect>
+   </property>
+   <layout class="QHBoxLayout" name="horizontalLayout">
+    <item>
+     <widget class="QRadioButton" name="sh45_both_upload_radio_btn">
+      <property name="font">
+       <font>
+        <family>Noto Sans Korean Regular</family>
+        <pointsize>8</pointsize>
+       </font>
+      </property>
+      <property name="text">
+       <string>4, 5 번 시트 동시입력</string>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QRadioButton" name="sh5_upload_radio_btn">
+      <property name="font">
+       <font>
+        <family>Noto Sans Korean Regular</family>
+        <pointsize>8</pointsize>
+       </font>
+      </property>
+      <property name="text">
+       <string>5번 시트 입력(mmr)</string>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QRadioButton" name="sh4_upload_radio_btn">
+      <property name="font">
+       <font>
+        <family>Noto Sans Korean Regular</family>
+        <pointsize>8</pointsize>
+       </font>
+      </property>
+      <property name="text">
+       <string>4번 시트 입력 (챔피언)</string>
+      </property>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QWidget" name="verticalLayoutWidget">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>380</y>
+     <width>681</width>
+     <height>151</height>
+    </rect>
+   </property>
+   <layout class="QVBoxLayout" name="result_vlayout"/>
+  </widget>
  </widget>
  <resources/>
  <connections/>

@@ -41,7 +41,7 @@
     </rect>
    </property>
    <property name="text">
-    <string>xx 까지 
+    <string>- 까지 
 읽어들임</string>
    </property>
   </widget>

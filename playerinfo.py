@@ -1,7 +1,4 @@
-from numpy import double
-
-import team_window
-from main import DEFINE_DEBUG_MODE
+from global_settings import *
 
 MAX_PLAYER_CNT = 10
 MAX_TEAM_MEMBER = 5
@@ -312,7 +309,7 @@ class PlayerInfoClass:
         # mmr 높은 순으로 정렬
         mmr_list.sort(key=lambda x: x[1], reverse=True)
 
-        if DEFINE_DEBUG_MODE:
+        if G_DEFINE_DEBUG_MODE:
             print("[kb.debug] 순위 방식 팀짜기 mmr list")
             print(mmr_list)
 
@@ -325,7 +322,7 @@ class PlayerInfoClass:
         teamA_mmr = self.calc_team_mmr(teamA_list)
         teamB_mmr = self.calc_team_mmr(teamB_list)
 
-        if DEFINE_DEBUG_MODE:
+        if G_DEFINE_DEBUG_MODE:
             print("[kb.debug] 순위 방식 팀짜기 team info (1, 2팀 나누기 전)")
             print(teamA_list)
             print(teamB_list)
@@ -365,7 +362,7 @@ class PlayerInfoClass:
         for idx in range(int(case_cnt / 2)):
             all_case_list.append([ret[idx], ret[case_cnt - 1 - idx]])
         ######################################################################################
-        if DEFINE_DEBUG_MODE:
+        if G_DEFINE_DEBUG_MODE:
             print("[kb.debug] 팀짜기 시작 10명의 play_info")
             for i in self.player_info:
                 print(i)

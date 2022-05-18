@@ -1,5 +1,7 @@
-from PyQt5.QtCore import pyqtSignal
-from PyQt5.QtWidgets import QWidget, QPushButton, QMessageBox
+from datetime import time
+
+from PyQt5.QtCore import pyqtSignal, QObject, pyqtSlot, QThread
+from PyQt5.QtWidgets import QWidget, QPushButton, QMessageBox, QDialog, QProgressBar, QVBoxLayout, QProgressDialog
 
 POPUP_TYPE_OK = 0
 POPUP_TYPE_OK_CANCEL = 1
@@ -45,5 +47,9 @@ class ValvePopup(QWidget):
             self.send_valve_popup_signal.emit(False)
 
         elif result == QMessageBox.Ok:
-
             self.send_valve_popup_signal.emit(True)
+
+
+
+
+

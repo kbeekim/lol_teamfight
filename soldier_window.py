@@ -4,8 +4,7 @@ from PyQt5 import uic
 from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtGui import QDoubleValidator, QIcon
 from PyQt5.QtWidgets import QWidget
-from main import resource_path
-from main import DEFINE_DEBUG_MODE
+from global_settings import *
 
 UI_FILE_NAME = 'soldier_window.ui'
 
