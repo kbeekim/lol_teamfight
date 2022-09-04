@@ -23,6 +23,8 @@ class ChampWindow(QWidget, form_class):
         self.out_btn = btn
         self.champ_list = G_CHAMPION
         self.champ_chosung_list = G_CHAMPION_CHOSUNG
+        self.champ_eng_list = G_CHAMPION_ENG
+        self.champ_else_list = G_CHAMPION_ELSE
 
         self.load_champ_list()
 
@@ -50,9 +52,10 @@ class ChampWindow(QWidget, form_class):
 
     def search_champ_filter(self, filter_text):
         self.champ_list_widget.clear()
-
+        print(filter_text)
         for idx, cl in enumerate(self.champ_list):
-            if filter_text in cl or filter_text in self.champ_chosung_list[idx]:
+            if filter_text in cl or filter_text in self.champ_chosung_list[idx] \
+                    or filter_text in self.champ_eng_list[idx] or filter_text in self.champ_else_list[idx]:
                 self.champ_list_widget.addItem(cl)
 
         self.refresh_champ_list()

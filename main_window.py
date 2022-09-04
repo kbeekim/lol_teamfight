@@ -1,7 +1,3 @@
-import itertools
-import os
-import random
-import sys
 from functools import partial
 
 from PyQt5.QtCore import Qt, pyqtSlot
@@ -48,7 +44,7 @@ class WindowClass(QMainWindow, form_class):
         self.excel_thread = None
         self.setupUi(self)
 
-        version = f'v{G_MAJOR_VERSION}.{G_MINOR_VERSION}_fix'
+        version = f'v{G_MAJOR_VERSION}.{G_MINOR_VERSION}'
         self.setWindowTitle("롤 인력사무소 " + version)
 
         # excel data load

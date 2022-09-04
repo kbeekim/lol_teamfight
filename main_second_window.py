@@ -20,5 +20,9 @@ class SecondWindow(QWidget, form_class):
         self.data_load_btn.clicked.connect(self.clicked_data_load_btn)
 
     def clicked_data_load_btn(self):
-        # excel_data.read_gspread_sheet4()
-        ValvePopup(POPUP_TYPE_OK, "확인창", "??!")
+        # if not excel_data.read_gspread_sheet4():
+        ValvePopup(POPUP_TYPE_OK, "확인창", "준비 중")
+
+
+
+
