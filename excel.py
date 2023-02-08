@@ -10,11 +10,20 @@ KEY_FILE_NAME = 'key.json'
 PATH = resource_path(KEY_FILE_NAME, '/key/')
 
 
-def next_available_row(sh, col):
+def last_string_row(sh, col):
+    """ 해당 열에서 글자가 있는 마지막 행의 값을 찾는다
+    Args:
+        - sh: 구글스프레드 시트 객체
+        - col: 구글스프레드 열
+
+    Returns:
+        - 글자가 있는 마지막 행의 값
+    """
     # row/col 시작은 1부터!
     # str_list = list(filter(None, sh.col_values(col)))
     str_list = list(sh.col_values(col))
-    return len(str_list) + 1
+
+    return len(str_list)
 
 
 def is_float(num):
@@ -43,19 +52,20 @@ class ExcelClass:
 
     # SHEET8 과 관련 함수들
     def read_gspread_sheet8(self):
-        ret = False
+        ret = True
         gc = gspread.service_account(filename=PATH)
         # self.doc = gc.open('파일 이름')
         spreadsheet_url = G_GSPREAD_URL
         doc = gc.open_by_url(spreadsheet_url)
+
         try:
             self.sheet8 = doc.worksheet(SHEET8)
         except Exception as e:
             print("오류 발생 - sheet 명칭 확인", e)
-            return ret
+            return False
 
-        #   순번     닉네임        줄임말    MMR   참여 횟수
-        #   NUM   NICKNAME    SHORTNICK   MMR    ENTRY
+        #   순번     닉네임        줄임말    MMR   참여 횟수    부계정/닉변
+        #   NUM   NICKNAME    SHORTNICK   MMR    ENTRY     SUBNAME
 
         # sheet.get_all_records()는 개별 시트안에 있는 모든 데이터를 key, value값으로 반환 합니다. -> list of dicts
         # key는 스프레드 시트에서 첫번째 row가 key값이 되며, 2번째 row부터는 value값으로 가져 옮니다.
@@ -64,7 +74,34 @@ class ExcelClass:
 
         # 멤버 총원
         self.total_member = len(self.worker_info)
-        ret = self.data_validation(self.sheet8)
+
+        # 23.02.01 kbeekim) (엑셀 Sheet8 변경) SUBNAME 추가
+        # 아이디 변경을 대비한 SUBNAME 필드 추가
+        # SUBNAME 필드가 비어있지 않다면 NICKNAME 대신 SUBNAME 을 사용한다.
+        for i in range(0, self.total_member):
+            if len(self.worker_info[i]['SUBNAME']) != 0:
+                self.worker_info[i]['NICKNAME'] = self.worker_info[i]['SUBNAME']
+
+        # sheet8 정합성 검증 1 (불필요 데이터 검출)
+        for n in range(1, 5):
+            final_row = last_string_row(self.sheet8, n) + 1  # 엑셀 n열의 마지막 행 + 1
+            if not final_row - 2 == self.total_member:
+                print(f"Sheet8 총 인원수({self.total_member})와 {n}열의 행 수({final_row - 2}) 일치하지 않음")
+                ret = False
+                break
+
+        # sheet8 정합성 검증 2 (mmr 값)
+        if ret:
+            mmr_value_list = self.sheet8.col_values(4)  # 엑셀 4열이 MMR 값
+            for idx, mmr in enumerate(mmr_value_list):
+                # 첫 행은 "MMR" 문자이므로 제외
+                if idx == 0:
+                    continue
+                if not is_float(mmr):
+                    print("mmr 값 이상 발견! : " + mmr)
+                    ret = False
+                    break
+
         return ret
 
     def get_worker_nickname(self):
@@ -85,42 +122,8 @@ class ExcelClass:
     def get_worker_info_total_member(self):
         return self.total_member
 
-    def data_validation(self, sh):
-        ret = True
-        next_row = next_available_row(sh, 1)  # 엑셀 1열
-
-        if next_row < self.total_member:
-            print("엑셀 행 수 일치하지 않음")
-            ret = False
-        elif sh.cell(next_row, 2).value is not None:
-            print("2열에 뭔가 있음")
-            ret = False
-        elif sh.cell(next_row, 3).value is not None:
-            print("3열에 뭔가 있음")
-            ret = False
-        elif sh.cell(next_row, 4).value is not None:
-            print("4열에 뭔가 있음")
-            ret = False
-        elif sh.cell(next_row, 5).value is not None:
-            print("5열에 뭔가 있음")
-            ret = False
-
-        mmr_value_list = sh.col_values(4)  # 엑셀 4열이 MMR 값
-
-        if G_DEFINE_DEBUG_MODE:
-            print("[kb.debug] mmr_value_list")
-            for i in mmr_value_list:
-                print(i)
-
-        for idx, mmr in enumerate(mmr_value_list):
-            # 첫 행은 "MMR" 문자이므로 제외
-            if idx == 0:
-                continue
-            if not is_float(mmr):
-                print("mmr 값 이상 발견! : " + mmr)
-                ret = False
-                break
-        return ret
+    """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+    """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
     # SHEET5 와 관련 함수들
     def read_gspread_sheet5(self):
@@ -134,21 +137,17 @@ class ExcelClass:
             print("오류 발생 - sheet 명칭 확인", e)
             return
 
-        self.sh5_end_row = next_available_row(self.sheet5, 5) - 1  # 5 => E열
-        # 마지막 행에 적혀 있는 문구 (ex] 4.24 내전50)
+        self.sh5_end_row = last_string_row(self.sheet5, 5)  # 5 => E열
+        # 마지막 행에 적혀 있는 문구 ([ex] 4.24 내전50)
         last_text = self.sheet5.cell(self.sh5_end_row, 5).value
-        tmp = last_text.split('내전')
-        last_cnt = tmp[1]
-        if last_cnt.isdigit():
-            final_cnt = str(int(last_cnt) + 1)
-        else:
-            final_cnt = "xx"
 
-        # now = datetime.now()
-        # if now.hour < 6:
-        #     base_date = date.today() - timedelta(1)
-        # else:
-        #     base_date = date.today()
+        final_cnt = "xx"
+        if '내전' in last_text:
+            tmp = last_text.split('내전')
+            last_cnt = tmp[1]
+
+            if last_cnt.isdigit():
+                final_cnt = str(int(last_cnt) + 1)
 
         # kbeekim) 그냥 당일 날짜로 하자
         base_date = date.today()
@@ -156,7 +155,7 @@ class ExcelClass:
 
         self.sh5_last_date_text = f'{final_date} 내전{final_cnt}'
 
-        #kb.todo sheet5 우선 무조건 True
+        # kb.todo sheet5 우선 무조건 True
         return True
 
     def get_sh5_update_cell_pos(self):
@@ -203,21 +202,25 @@ class ExcelClass:
                     self.sh4_end_row = top_row - 1
                     break
 
-
         if G_DEFINE_DEBUG_MODE:
             print(f"sheet4 base row: {self.sh4_end_row} 행")
+        if self.sh4_end_row is None:
+            return False
 
         # 연계) A열에서 end_row - 8 (시트 4는 8행씩 반복됨) 하여 전 내전 문자열을 확인
-        # (ex] 05.08 내전85)
-        last_text = self.sheet4.cell(self.sh4_end_row - 8, 1).value
-        if G_DEFINE_DEBUG_MODE:
-            print(f"sheet4 before : {last_text}")
-        tmp = last_text.split('내전')
-        last_cnt = tmp[1]
-        if last_cnt.isdigit():
-            final_cnt = str(int(last_cnt) + 1)
+        # ([ex] 05.08 내전85)
+        final_cnt = "xx"
+        if self.sh4_end_row - 8 < 1:
+            final_cnt = "01"
         else:
-            final_cnt = "xx"
+            last_text = self.sheet4.cell(self.sh4_end_row - 8, 1).value
+            if G_DEFINE_DEBUG_MODE:
+                print(f"sheet4 before : {last_text}")
+            if '내전' in last_text:
+                tmp = last_text.split('내전')
+                last_cnt = tmp[1]
+                if last_cnt.isdigit():
+                    final_cnt = str(int(last_cnt) + 1)
 
         # kbeekim) 그냥 당일 날짜로 하자
         base_date = date.today()
@@ -227,10 +230,12 @@ class ExcelClass:
         if G_DEFINE_DEBUG_MODE:
             print(f"sheet4 after : {self.sh4_last_date_text}")
 
-        # kb.todo sheet4 우선 무조건 True
+        # kb.todo sheet4 False True 조건 확인
         return True
 
     def update_4_sheet(self, win_data, lose_data):
+        if self.sh4_end_row is None:
+            return False
         final_row = self.sh4_end_row
 
         # 05.24 내전xx 입력

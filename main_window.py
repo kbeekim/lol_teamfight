@@ -48,7 +48,9 @@ class WindowClass(QMainWindow, form_class):
         self.setWindowTitle("롤 인력사무소 " + version)
 
         # excel data load
-        excel_data.read_gspread_sheet8()
+        if not excel_data.read_gspread_sheet8():
+            ValvePopup(POPUP_TYPE_OK, "오류창", "MMR 로드 실패!\n(엑셀 sheet8 검토필요)")
+            exit()
 
         # 10명의 참가자 정보 List
         self.pl = PlayerInfoClass()
@@ -162,11 +164,12 @@ class WindowClass(QMainWindow, form_class):
     def clicked_load_btn(self):
         # kbeekim) 기존의 그룹/분할은 취소되며 idx 도 변경될 수 있음
 
+        # 데이터 로드 성공 시, 기존 리스트 유지를 위해 tmp_list
         tmp_list = []
-        for dix in self.pl.get_all_player_info():
-            if dix is None:
+        for idx in self.pl.get_all_player_info():
+            if idx is None:
                 continue
-            tmp_list.append(dix['NICKNAME'])
+            tmp_list.append(idx['NICKNAME'])
 
         if G_DEFINE_DEBUG_MODE:
             print("[kb.debug] load btn 시, 기존 tmp list : " + str(tmp_list))
