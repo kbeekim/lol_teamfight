@@ -47,10 +47,9 @@ class WindowClass(QMainWindow, form_class):
         version = f'v{G_MAJOR_VERSION}.{G_MINOR_VERSION}'
         self.setWindowTitle("롤 인력사무소 " + version)
 
-        # excel data load
+        # # excel data load
         if not excel_data.read_gspread_sheet8():
-            ValvePopup(POPUP_TYPE_OK, "오류창", "MMR 로드 실패!\n(엑셀 sheet8 검토필요)")
-            exit()
+            self.show_message("MMR 로드 실패!\n(엑셀 sheet8 확인 필요)", STATUS_BAR_TYPE_WARN, 0)
 
         # 10명의 참가자 정보 List
         self.pl = PlayerInfoClass()
@@ -148,6 +147,8 @@ class WindowClass(QMainWindow, form_class):
         # 상태바
         self.statusBar().setFont(QFont("Noto_Sans", 12))
 
+    """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+    """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
     def clicked_order_radbtn(self):
         if self.frequency_order_radio_btn.isChecked():
             self.load_worker_list(WORKER_ORDER_FREQUENCY)
@@ -211,8 +212,11 @@ class WindowClass(QMainWindow, form_class):
                     self.insert_worker_to_player(item, PLAYER_FLAG_NORMAL)
 
             ValvePopup(POPUP_TYPE_OK, "확인창", "MMR 로드 성공!")
+            self.show_message("", STATUS_BAR_TYPE_WARN, 0)
         else:
+            # work_info는 갱신 이전 것으로 그냥 쓰는걸로!
             ValvePopup(POPUP_TYPE_OK, "확인창", "MMR 로드 실패!")
+            self.show_message("MMR 로드 실패!\n(엑셀 sheet8 확인 필요)", STATUS_BAR_TYPE_WARN, 0)
 
     def clicked_search_clear_btn(self):
         self.search_edit.setText("")

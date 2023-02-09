@@ -52,6 +52,11 @@ class ExcelClass:
 
     # SHEET8 과 관련 함수들
     def read_gspread_sheet8(self):
+        """ gspread sheet8 을 읽어와  self.worker_info 를 세팅한다.
+        Args:
+        Returns:
+            - 결과 성공/실패
+        """
         ret = True
         gc = gspread.service_account(filename=PATH)
         # self.doc = gc.open('파일 이름')
@@ -64,29 +69,31 @@ class ExcelClass:
             print("오류 발생 - sheet 명칭 확인", e)
             return False
 
+        prev_worker_info = self.worker_info
         #   순번     닉네임        줄임말    MMR   참여 횟수    부계정/닉변
         #   NUM   NICKNAME    SHORTNICK   MMR    ENTRY     SUBNAME
 
         # sheet.get_all_records()는 개별 시트안에 있는 모든 데이터를 key, value값으로 반환 합니다. -> list of dicts
         # key는 스프레드 시트에서 첫번째 row가 key값이 되며, 2번째 row부터는 value값으로 가져 옮니다.
         # self.worker_info = sheet8.get_all_values()
-        self.worker_info = self.sheet8.get_all_records()
+        tmp_worker_info = self.sheet8.get_all_records()
 
-        # 멤버 총원
-        self.total_member = len(self.worker_info)
+        # 총원
+        tmp_total_member = len(tmp_worker_info)
 
         # 23.02.01 kbeekim) (엑셀 Sheet8 변경) SUBNAME 추가
         # 아이디 변경을 대비한 SUBNAME 필드 추가
-        # SUBNAME 필드가 비어있지 않다면 NICKNAME 대신 SUBNAME 을 사용한다.
-        for i in range(0, self.total_member):
-            if len(self.worker_info[i]['SUBNAME']) != 0:
-                self.worker_info[i]['NICKNAME'] = self.worker_info[i]['SUBNAME']
+        # 23.02.10 kbeekim) 좀 더 고려.. 엑셀 자체를 수정해야할 듯함
+
+        # for i in range(0, tmp_total_member):
+        #     if len(tmp_worker_info[i]['SUBNAME']) != 0:
+        #         tmp_worker_info[i]['NICKNAME'] = tmp_worker_info[i]['SUBNAME']
 
         # sheet8 정합성 검증 1 (불필요 데이터 검출)
         for n in range(1, 5):
             final_row = last_string_row(self.sheet8, n) + 1  # 엑셀 n열의 마지막 행 + 1
-            if not final_row - 2 == self.total_member:
-                print(f"Sheet8 총 인원수({self.total_member})와 {n}열의 행 수({final_row - 2}) 일치하지 않음")
+            if not final_row - 2 == tmp_total_member:
+                print(f"Sheet8 총 인원수({tmp_total_member})와 {n}열의 행 수({final_row - 2}) 일치하지 않음")
                 ret = False
                 break
 
@@ -102,6 +109,13 @@ class ExcelClass:
                     ret = False
                     break
 
+        if ret:
+            self.worker_info = tmp_worker_info
+        else:
+            self.worker_info = prev_worker_info
+
+        # 멤버 총원
+        self.total_member = len(self.worker_info)
         return ret
 
     def get_worker_nickname(self):
@@ -176,6 +190,9 @@ class ExcelClass:
 
     def get_sh5_last_date_text(self):
         return self.sh5_last_date_text
+
+    """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+    """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
     # SHEET4 와 관련 함수들
     def read_gspread_sheet4(self):
