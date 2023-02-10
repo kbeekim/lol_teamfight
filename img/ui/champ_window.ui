@@ -24,7 +24,7 @@
    </property>
    <property name="font">
     <font>
-     <family>Noto Sans Korean Regular</family>
+     <family>맑은 고딕</family>
     </font>
    </property>
    <property name="autoFillBackground">
@@ -76,7 +76,7 @@
    </property>
    <property name="font">
     <font>
-     <family>Noto Sans Korean Regular</family>
+     <family>맑은 고딕</family>
     </font>
    </property>
    <property name="autoFillBackground">

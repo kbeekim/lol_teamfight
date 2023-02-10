@@ -129,7 +129,7 @@
    </property>
    <property name="font">
     <font>
-     <family>Noto Sans Korean Regular</family>
+     <family>맑은 고딕</family>
      <pointsize>12</pointsize>
     </font>
    </property>
@@ -148,7 +148,7 @@
    </property>
    <property name="font">
     <font>
-     <family>Noto Sans Korean Regular</family>
+     <family>맑은 고딕</family>
      <pointsize>12</pointsize>
     </font>
    </property>
@@ -167,7 +167,7 @@
    </property>
    <property name="font">
     <font>
-     <family>Noto Sans Korean Regular</family>
+     <family>맑은 고딕</family>
      <pointsize>12</pointsize>
     </font>
    </property>
@@ -196,7 +196,7 @@
    </property>
    <property name="font">
     <font>
-     <family>Noto Sans Korean Regular</family>
+     <family>맑은 고딕</family>
      <pointsize>12</pointsize>
     </font>
    </property>
@@ -215,7 +215,7 @@
    </property>
    <property name="font">
     <font>
-     <family>Noto Sans Korean Regular</family>
+     <family>맑은 고딕</family>
      <weight>50</weight>
      <bold>false</bold>
     </font>
@@ -238,7 +238,7 @@
      <widget class="QRadioButton" name="sh45_both_upload_radio_btn">
       <property name="font">
        <font>
-        <family>Noto Sans Korean Regular</family>
+        <family>맑은 고딕</family>
         <pointsize>8</pointsize>
        </font>
       </property>
@@ -251,7 +251,7 @@
      <widget class="QRadioButton" name="sh5_upload_radio_btn">
       <property name="font">
        <font>
-        <family>Noto Sans Korean Regular</family>
+        <family>맑은 고딕</family>
         <pointsize>8</pointsize>
        </font>
       </property>
@@ -264,7 +264,7 @@
      <widget class="QRadioButton" name="sh4_upload_radio_btn">
       <property name="font">
        <font>
-        <family>Noto Sans Korean Regular</family>
+        <family>맑은 고딕</family>
         <pointsize>8</pointsize>
        </font>
       </property>

@@ -261,7 +261,13 @@ class PlayerInfoClass:
         for idx in range(len(self.player_info)):
             try:
                 if self.player_info[idx] is not None:  # 주의! None 이면..
-                    if self.player_info[idx]['NICKNAME'] == in_text:
+                    # kbeekim) 23.02.10 닉네임 변경 대비, subname 추가
+                    if len(self.player_info[idx]['SUBNAME']) != 0:
+                        tmp_name = self.player_info[idx]['SUBNAME']   # 연계
+                    else:
+                        tmp_name = self.player_info[idx]['NICKNAME']  # 연계
+
+                    if tmp_name == in_text:
                         return True
             except Exception as e:
                 print("오류 발생 - player_info 확인 필요", e)

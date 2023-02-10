@@ -81,14 +81,6 @@ class ExcelClass:
         # 총원
         tmp_total_member = len(tmp_worker_info)
 
-        # 23.02.01 kbeekim) (엑셀 Sheet8 변경) SUBNAME 추가
-        # 아이디 변경을 대비한 SUBNAME 필드 추가
-        # 23.02.10 kbeekim) 좀 더 고려.. 엑셀 자체를 수정해야할 듯함
-
-        # for i in range(0, tmp_total_member):
-        #     if len(tmp_worker_info[i]['SUBNAME']) != 0:
-        #         tmp_worker_info[i]['NICKNAME'] = tmp_worker_info[i]['SUBNAME']
-
         # sheet8 정합성 검증 1 (불필요 데이터 검출)
         for n in range(1, 5):
             final_row = last_string_row(self.sheet8, n) + 1  # 엑셀 n열의 마지막 행 + 1
@@ -118,19 +110,28 @@ class ExcelClass:
         self.total_member = len(self.worker_info)
         return ret
 
-    def get_worker_nickname(self):
+    def get_worker_name(self):
         worker_nickname = []
         for i in range(0, self.total_member):
-            worker_nickname.append(self.worker_info[i]['NICKNAME'])  # 연계
+            # kbeekim) 23.02.10 닉네임 변경 대비, subname 추가
+            if len(self.worker_info[i]['SUBNAME']) != 0:
+                worker_nickname.append(self.worker_info[i]['SUBNAME'])  # 연계
+            else:
+                worker_nickname.append(self.worker_info[i]['NICKNAME'])  # 연계
 
         # kbeekim) 엑셀에서 참여율 순으로 sort 하기로 함 22.04.12 (기획팀 협의)
         # return sorted(worker_nickname)
         return worker_nickname
 
-    def get_worker_info_by_nickname(self, nickname):
+    def get_worker_info_by_name(self, name):
+        # kbeekim) 23.02.10 닉네임 변경 대비, subname 추가
         for i in range(0, self.total_member):
-            if self.worker_info[i]['NICKNAME'] == nickname:  # 연계
-                return self.worker_info[i]
+            if len(self.worker_info[i]['SUBNAME']) != 0:
+                if self.worker_info[i]['SUBNAME'] == name:  # 연계
+                    return self.worker_info[i]
+            else:
+                if self.worker_info[i]['NICKNAME'] == name:  # 연계
+                    return self.worker_info[i]
         return None
 
     def get_worker_info_total_member(self):

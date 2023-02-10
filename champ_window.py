@@ -42,8 +42,12 @@ class ChampWindow(QWidget, form_class):
         # 챔피언 리스트 더블 클릭 시
         self.champ_list_widget.itemDoubleClicked.connect(self.double_clicked_champ)
 
+        # Ok 버튼 클릭 시
         self.champ_ok_btn.clicked.connect(self.clicked_ok_btn)
 
+        # 비우기 버튼 클릭 시
+        self.champ_clear_btn.clicked.connect(self.clicked_champ_clear_btn)
+        
         if G_DEFINE_DEBUG_MODE:
             print("===================================")
             for cmp in range(len(G_CHAMPION_CLICKED)):
@@ -52,7 +56,7 @@ class ChampWindow(QWidget, form_class):
 
     def search_champ_filter(self, filter_text):
         self.champ_list_widget.clear()
-        print(filter_text)
+
         for idx, cl in enumerate(self.champ_list):
             if filter_text in cl or filter_text in self.champ_chosung_list[idx] \
                     or filter_text in self.champ_eng_list[idx] or filter_text in self.champ_else_list[idx]:
@@ -94,6 +98,9 @@ class ChampWindow(QWidget, form_class):
         champ_str = self.champ_list_widget.selectedItems()[0].text()
         self.out_btn.setText(champ_str)
         self.close()
+
+    def clicked_champ_clear_btn(self):
+        self.search_champ_edit.setText("")
 
     def refresh_champ_list(self):
         for idx in range(self.champ_list_widget.count()):

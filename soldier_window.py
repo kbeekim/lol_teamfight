@@ -35,7 +35,8 @@ ALERT_MSG_TIMEOUT_NORMAL = 3000
 # worker_info 와 동일한 구조로 soldier_info 를 만든다
 # (excel.py 의 worker_info 양식이 변경 되면 같이 수정 필요)
 def make_soldier_info(nickname, mmr_str):
-    soldier_info = {'NUM': 99, 'NICKNAME': nickname, 'SHORTNICK': nickname, 'MMR' : round(float(mmr_str), 1), 'ENTRY': 0}
+    # kbeekim) 23.02.10 닉네임 변경 대비, subname 추가
+    soldier_info = {'NUM': 99, 'NICKNAME': nickname, 'SHORTNICK': nickname, 'MMR' : round(float(mmr_str), 1), 'ENTRY': 0, 'SUBNAME': ""} # 연계
 
     # soldier_info[1] = nickname
     # soldier_info[2] = nickname
@@ -203,14 +204,14 @@ class SoldierWindow(QWidget, form_class):
     # kbeekim) 애초에 window 가 아닌 QWidget 로 만들어버려 상태바를 못쓰게되었다.
     # TextLabel 과 QTimer로 대략적인 문구표출 기능을 하게 함
     def show_alert_message(self, msg, alert_type):
-        # print("[kb.test] 폰트:  " + self.alert_label.font().family())
+        # print("폰트:  " + self.alert_label.font().family())
         self.timer.stop()
 
         if alert_type == ALERT_MSG_TYPE_NORMAL:
             self.timer.start(ALERT_MSG_TIMEOUT_NORMAL)
             self.alert_label.setStyleSheet(
                 # kb.check 이상하게 연속으로 호출하면 Gulim 으로 바뀜;
-                "font-family: Noto Sans Korean Regular;"
+                "font-family: 맑은 고딕;"
                 "color: red;"
             )
             self.alert_label.setText(msg)

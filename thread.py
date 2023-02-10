@@ -30,10 +30,10 @@ class Thread(QThread):
         elif self.read_type == G_THREAD_READ_4:
             self.result = self.excel.read_gspread_sheet4()
         elif self.read_type == G_THREAD_READ_4_5:
-            #kb.todo 어차피 결과를 보진 않음
-            self.excel.read_gspread_sheet5()
-            self.result = self.excel.read_gspread_sheet4()
-
+            result_5 = self.excel.read_gspread_sheet5()
+            result_4 = self.excel.read_gspread_sheet4()
+            # 4, 5 두 개 모두 성공해야 성공
+            self.result = result_4 & result_5
         self.end_thread_signal.emit(self.result)
 
     def delete(self):

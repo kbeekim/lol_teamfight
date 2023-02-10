@@ -69,7 +69,7 @@ def make_btn(is_draggable, width, text_size, text):
     """)
 
     if text_size is not None:
-        btn.setFont(QFont("Noto_Sans", text_size))
+        btn.setFont(QFont(G_FONT, text_size))
 
     return btn
 
@@ -216,18 +216,29 @@ class TeamWindow(QDialog, form_class):
             # h_layout.addWidget(make_btn(False, 56, None, "2"))
             # h_layout.addWidget(make_btn(False, 56, None, "3"))
 
-            h_layout.addWidget(
-                make_btn(True, None, 13, self.get_nickname(teamA_list[idx])))
-            h_layout.addWidget(make_btn(True, 180, 10, "(챔피언 입력)"))
+            # kbeekim) 23.02.10 닉네임 변경 대비, subname 추가
+            subnick = self.get_subnick(teamA_list[idx])
+            if len(subnick) > 0:
+                h_layout.addWidget(
+                    make_btn(True, None, 13, f"{self.get_nickname(teamA_list[idx])}\n({subnick})"))
+            else:
+                h_layout.addWidget(make_btn(True, None, 13, self.get_nickname(teamA_list[idx])))
 
+            h_layout.addWidget(make_btn(True, 180, 10, "(챔피언 입력)"))
             self.teamALayout.addLayout(h_layout)
 
         for idx, line in enumerate(line_list):
             h_layout = QHBoxLayout()
 
             h_layout.addWidget(make_btn(True, 180, 10, "(챔피언 입력)"))
-            h_layout.addWidget(
-                make_btn(True, None, 13, self.get_nickname(teamB_list[idx])))
+            # kbeekim) 23.02.10 닉네임 변경 대비, subname 추가
+            subnick = self.get_subnick(teamB_list[idx])
+            if len(subnick) > 0:
+                h_layout.addWidget(
+                    make_btn(True, None, 13, f"{self.get_nickname(teamB_list[idx])}\n({subnick})"))
+            else:
+                h_layout.addWidget(make_btn(True, None, 13, self.get_nickname(teamB_list[idx])))
+
             #kb.todo 자주 사용하는 챔피언
             # h_layout.addWidget(make_btn(False, 56, None, "1"))
             # h_layout.addWidget(make_btn(False, 56, None, "2"))
@@ -258,7 +269,7 @@ class TeamWindow(QDialog, form_class):
         str_2 = f"2팀: {self.get_short_nick(teamB_list[0])} {self.get_short_nick(teamB_list[1])} " \
                 f"{self.get_short_nick(teamB_list[2])} {self.get_short_nick(teamB_list[3])} {self.get_short_nick(teamB_list[4])} "
 
-        result_txt = "~~~~~~~~~.\n" + str_1 + "\n" + str_2
+        result_txt = "~~~~~~~~~..\n" + str_1 + "\n" + str_2
         self.team_edit.setText(result_txt)
 
         if G_DEFINE_DEBUG_MODE:
@@ -291,6 +302,10 @@ class TeamWindow(QDialog, form_class):
     def after_end_excel_thread(self, win_team, excel_result):
         self.progress_dialog.cancel()
 
+        if not excel_result:
+            ValvePopup(POPUP_TYPE_OK, "확인창", "[Error] 엑셀 확인 필요")
+            return 
+        
         # kb.todo sh4 날짜는?
         date_text = excel_data.get_sh5_last_date_text()
         self.sh5_upload_list.clear()
@@ -302,17 +317,21 @@ class TeamWindow(QDialog, form_class):
             self.tableWidget.setItem(n, 0, QTableWidgetItem(date_text))
 
             if win_team == WIN_TEAM_A:
-                nick_win = self.teamALayout.itemAt(n).itemAt(TEAM_A_PLAYER_IDX).widget().text()
+                tmp_nick_win = self.teamALayout.itemAt(n).itemAt(TEAM_A_PLAYER_IDX).widget().text()
                 champ_win = self.teamALayout.itemAt(n).itemAt(TEAM_A_CHAMP_IDX).widget().text()
 
-                nick_lose = self.teamBLayout.itemAt(n).itemAt(TEAM_B_PLAYER_IDX).widget().text()
+                tmp_nick_lose = self.teamBLayout.itemAt(n).itemAt(TEAM_B_PLAYER_IDX).widget().text()
                 champ_lose = self.teamBLayout.itemAt(n).itemAt(TEAM_B_CHAMP_IDX).widget().text()
             elif win_team == WIN_TEAM_B:
-                nick_win = self.teamBLayout.itemAt(n).itemAt(TEAM_B_PLAYER_IDX).widget().text()
+                tmp_nick_win = self.teamBLayout.itemAt(n).itemAt(TEAM_B_PLAYER_IDX).widget().text()
                 champ_win = self.teamBLayout.itemAt(n).itemAt(TEAM_B_CHAMP_IDX).widget().text()
 
-                nick_lose = self.teamALayout.itemAt(n).itemAt(TEAM_A_PLAYER_IDX).widget().text()
+                tmp_nick_lose = self.teamALayout.itemAt(n).itemAt(TEAM_A_PLAYER_IDX).widget().text()
                 champ_lose = self.teamALayout.itemAt(n).itemAt(TEAM_A_CHAMP_IDX).widget().text()
+
+            # kbeekim) 23.02.10 닉네임 변경 대비, subname 추가
+            nick_win = tmp_nick_win.splitlines()[0]
+            nick_lose = tmp_nick_lose.splitlines()[0]
 
             self.tableWidget.setItem(n, 1, QTableWidgetItem(nick_win))
             self.tableWidget.setItem(n, 2, QTableWidgetItem(champ_win))
@@ -395,6 +414,9 @@ class TeamWindow(QDialog, form_class):
 
     def get_short_nick(self, idx):
         return self.player_info[idx]['SHORTNICK']
+
+    def get_subnick(self, idx):
+        return self.player_info[idx]['SUBNAME']
 
     def get_mmr(self, idx):
         return self.player_info[idx]['MMR']

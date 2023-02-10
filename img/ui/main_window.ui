@@ -34,7 +34,7 @@
     </property>
     <property name="font">
      <font>
-      <family>Noto Sans Korean Regular</family>
+      <family>맑은 고딕</family>
      </font>
     </property>
     <property name="currentIndex">
@@ -55,7 +55,7 @@
       </property>
       <property name="font">
        <font>
-        <family>Noto Sans Korean Regular</family>
+        <family>맑은 고딕</family>
        </font>
       </property>
       <property name="text">
@@ -104,7 +104,7 @@
       </property>
       <property name="font">
        <font>
-        <family>Noto Sans Korean Regular</family>
+        <family>맑은 고딕</family>
         <pointsize>14</pointsize>
         <weight>50</weight>
         <bold>false</bold>
@@ -136,7 +136,7 @@
       </property>
       <property name="font">
        <font>
-        <family>Noto Sans Korean Regular</family>
+        <family>맑은 고딕</family>
        </font>
       </property>
       <property name="text">
@@ -154,7 +154,7 @@
       </property>
       <property name="font">
        <font>
-        <family>Noto Sans Korean Regular</family>
+        <family>맑은 고딕</family>
        </font>
       </property>
       <property name="text">
@@ -172,7 +172,7 @@
       </property>
       <property name="font">
        <font>
-        <family>Noto Sans Korean Regular</family>
+        <family>맑은 고딕</family>
         <pointsize>12</pointsize>
         <weight>50</weight>
         <bold>false</bold>
@@ -193,7 +193,7 @@
       </property>
       <property name="font">
        <font>
-        <family>Noto Sans Korean Regular</family>
+        <family>맑은 고딕</family>
        </font>
       </property>
       <property name="text">
@@ -211,7 +211,7 @@
       </property>
       <property name="font">
        <font>
-        <family>Noto Sans Korean Regular</family>
+        <family>맑은 고딕</family>
        </font>
       </property>
       <property name="autoFillBackground">
@@ -233,7 +233,7 @@
       </property>
       <property name="font">
        <font>
-        <family>Noto Sans Korean Regular</family>
+        <family>맑은 고딕</family>
        </font>
       </property>
       <property name="text">
@@ -252,7 +252,7 @@
       </property>
       <property name="font">
        <font>
-        <family>Noto Sans Korean Regular</family>
+        <family>맑은 고딕</family>
        </font>
       </property>
       <property name="autoFillBackground">
@@ -273,7 +273,7 @@
       </property>
       <property name="font">
        <font>
-        <family>Noto Sans Korean Regular</family>
+        <family>맑은 고딕</family>
        </font>
       </property>
       <property name="text">
@@ -320,12 +320,12 @@
         <widget class="QRadioButton" name="frequency_order_radio_btn">
          <property name="font">
           <font>
-           <family>Noto Sans Korean Regular</family>
+           <family>맑은 고딕</family>
            <pointsize>8</pointsize>
           </font>
          </property>
          <property name="text">
-          <string>공무원 우선제</string>
+          <string>롤무원 우선제</string>
          </property>
         </widget>
        </item>
@@ -333,7 +333,7 @@
         <widget class="QRadioButton" name="alphabet_order_radio_btn">
          <property name="font">
           <font>
-           <family>Noto Sans Korean Regular</family>
+           <family>맑은 고딕</family>
            <pointsize>8</pointsize>
           </font>
          </property>
@@ -346,7 +346,7 @@
         <widget class="QRadioButton" name="reverse_order_radio_btn">
          <property name="font">
           <font>
-           <family>Noto Sans Korean Regular</family>
+           <family>맑은 고딕</family>
            <pointsize>8</pointsize>
           </font>
          </property>

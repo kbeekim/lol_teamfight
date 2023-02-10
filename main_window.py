@@ -73,7 +73,7 @@ class WindowClass(QMainWindow, form_class):
                 self.set_style_player_btn(turn, str(turn + 1), PLAYER_FLAG_DEFAULT)
 
                 self.player_btn_list[turn].setMaximumHeight(70)  # 버튼 높이 강제 조절
-                self.player_btn_list[turn].setFont(QFont("Noto_Sans", 15))  # 폰트,크기 조절
+                self.player_btn_list[turn].setFont(QFont("맑은 고딕", 15))  # 폰트,크기 조절
 
                 # 버튼의 idx를 알기위해 ObjectName으로 정함
                 self.player_btn_list[turn].setObjectName(str(turn))
@@ -145,7 +145,7 @@ class WindowClass(QMainWindow, form_class):
         self.refresh_player_cnt()
 
         # 상태바
-        self.statusBar().setFont(QFont("Noto_Sans", 12))
+        self.statusBar().setFont(QFont(G_FONT, 12))
 
     """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
     """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -170,7 +170,11 @@ class WindowClass(QMainWindow, form_class):
         for idx in self.pl.get_all_player_info():
             if idx is None:
                 continue
-            tmp_list.append(idx['NICKNAME'])
+            # kbeekim) 23.02.10 닉네임 변경 대비, subname 추가
+            if len(idx['SUBNAME']) != 0:
+                tmp_list.append(idx['SUBNAME']) #연계
+            else:
+                tmp_list.append(idx['NICKNAME']) #연계
 
         if G_DEFINE_DEBUG_MODE:
             print("[kb.debug] load btn 시, 기존 tmp list : " + str(tmp_list))
@@ -206,8 +210,8 @@ class WindowClass(QMainWindow, form_class):
             else:
                 self.load_worker_list(WORKER_ORDER_FREQUENCY)
 
-            for tmp_nick in tmp_list:
-                item = self.worker_list_widget.findItems(tmp_nick, Qt.MatchExactly)
+            for tmp_name in tmp_list:
+                item = self.worker_list_widget.findItems(tmp_name, Qt.MatchExactly)
                 if len(item) > 0:
                     self.insert_worker_to_player(item, PLAYER_FLAG_NORMAL)
 
@@ -333,22 +337,20 @@ class WindowClass(QMainWindow, form_class):
     def insert_worker_to_player(self, workers, player_flag):
         worker_info_list = []
         for i in range(len(workers)):
-            worker_info_list.append(excel_data.get_worker_info_by_nickname(workers[i].text()))
+            worker_info_list.append(excel_data.get_worker_info_by_name(workers[i].text()))
         ret = self.pl.set_player_info(worker_info_list, player_flag)
 
-        if G_DEFINE_EVENT_MODE: # 준꿀 버그
-            find_junehoney = False
-            
         if isinstance(ret, list):
             player_idx_list = ret
             # return 값으로 player_list 의 idx를 받아 온다.
             for i, player_idx in enumerate(player_idx_list):
-                worker_name = worker_info_list[i]['NICKNAME']  # 연계
-                tmp = f'{worker_name}\n({worker_info_list[i]["MMR"]})'
-
-                if G_DEFINE_EVENT_MODE:  # 준꿀 버그
-                    if worker_name == "준꿀":
-                        find_junehoney = True
+                # kbeekim) 23.02.10 닉네임 변경 대비, subname 추가
+                nickname = worker_info_list[i]['NICKNAME']  # 연계
+                subname = worker_info_list[i]['SUBNAME']  # 연계
+                if len(subname) != 0:
+                    tmp = f'{nickname}\n({subname})'
+                else:
+                    tmp = f'{nickname}'
 
                 self.set_style_player_btn(player_idx, tmp, player_flag)
 
@@ -356,11 +358,6 @@ class WindowClass(QMainWindow, form_class):
             for i in range(len(workers)):
                 workers[i].setFlags(Qt.NoItemFlags)
             self.refresh_player_cnt()
-
-            if G_DEFINE_EVENT_MODE: # 준꿀 버그
-                if (find_junehoney):
-                    if random.randint(1, 50) == 1:
-                        ValvePopup(POPUP_TYPE_OK, "준꿀 버그", "ㄱㄱㄱㄱㄱㄱ?")
 
         elif isinstance(ret, int):
             self.check_error_code_to_msg(ret)
@@ -438,7 +435,6 @@ class WindowClass(QMainWindow, form_class):
         """
         for idx in range(self.worker_list_widget.count()):
             item = self.worker_list_widget.item(idx)
-
             if self.pl.is_player_already_in(item.text()):
                 item.setFlags(Qt.NoItemFlags)
             else:
@@ -447,7 +443,7 @@ class WindowClass(QMainWindow, form_class):
 
     def load_worker_list(self, order):
         self.worker_list_widget.clear()
-        tmp_list = excel_data.get_worker_nickname()
+        tmp_list = excel_data.get_worker_name()
 
         if order == WORKER_ORDER_FREQUENCY:
             self.nick_list = tmp_list
