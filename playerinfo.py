@@ -429,7 +429,7 @@ class PlayerInfoClass:
             try:    # 주의
                 ret += (self.player_info[ele]['MMR'])  # mmr 연계
             except Exception as e:
-                print("예외가 발생하였습니다." , e)
+                print("예외가 발생하였습니다.", e)
 
         return round(ret, 2)
 

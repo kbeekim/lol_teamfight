@@ -52,7 +52,7 @@ class ExcelClass:
 
     # SHEET8 과 관련 함수들
     def read_gspread_sheet8(self):
-        """ gspread sheet8 을 읽어와  self.worker_info 를 세팅한다.
+        """ gspread sheet8 을 읽어와  self.worker_info 를 설정한다.
         Args:
         Returns:
             - 결과 성공/실패
@@ -111,19 +111,30 @@ class ExcelClass:
         return ret
 
     def get_worker_name(self):
-        worker_nickname = []
+        """ self.work_info 리스트 에서 이름 리스트를 리턴한다.
+        Args:
+        Returns:
+            - worker 이름 리스트
+        """
+        worker_name = []
         for i in range(0, self.total_member):
             # kbeekim) 23.02.10 닉네임 변경 대비, subname 추가
             if len(self.worker_info[i]['SUBNAME']) != 0:
-                worker_nickname.append(self.worker_info[i]['SUBNAME'])  # 연계
+                worker_name.append(self.worker_info[i]['SUBNAME'])  # 연계
             else:
-                worker_nickname.append(self.worker_info[i]['NICKNAME'])  # 연계
+                worker_name.append(self.worker_info[i]['NICKNAME'])  # 연계
 
         # kbeekim) 엑셀에서 참여율 순으로 sort 하기로 함 22.04.12 (기획팀 협의)
         # return sorted(worker_nickname)
-        return worker_nickname
+        return worker_name
 
     def get_worker_info_by_name(self, name):
+        """ self.work_info 의 네임(nickname or subname)과 일치하는 값이 있다면
+        해당 worker_info 를 리턴한다.
+        Args: name
+        Returns: 네임과 일치하는 worker_info
+                 없다면 None
+        """
         # kbeekim) 23.02.10 닉네임 변경 대비, subname 추가
         for i in range(0, self.total_member):
             if len(self.worker_info[i]['SUBNAME']) != 0:
@@ -135,6 +146,10 @@ class ExcelClass:
         return None
 
     def get_worker_info_total_member(self):
+        """ worker_info 리스트의 길이(=총 인원) 리턴 
+        Args: 
+        Returns: 총 인원 수
+        """
         return self.total_member
 
     """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -142,6 +157,11 @@ class ExcelClass:
 
     # SHEET5 와 관련 함수들
     def read_gspread_sheet5(self):
+        """ gspread sheet5 을 읽어와  self.sh5_end_row/self.sh5_last_date_text 를 설정한다.
+        Args:
+        Returns:
+            - 결과 성공/실패
+        """
         gc = gspread.service_account(filename=PATH)
         # self.doc = gc.open('Season.2022.SPRING')
         spreadsheet_url = G_GSPREAD_URL
@@ -150,19 +170,21 @@ class ExcelClass:
             self.sheet5 = doc.worksheet(SHEET5)
         except Exception as e:
             print("오류 발생 - sheet 명칭 확인", e)
-            return
+            return False
 
         self.sh5_end_row = last_string_row(self.sheet5, 5)  # 5 => E열
         # 마지막 행에 적혀 있는 문구 ([ex] 4.24 내전50)
         last_text = self.sheet5.cell(self.sh5_end_row, 5).value
 
-        final_cnt = "xx"
+        final_cnt = ""
         if '내전' in last_text:
             tmp = last_text.split('내전')
             last_cnt = tmp[1]
 
             if last_cnt.isdigit():
                 final_cnt = str(int(last_cnt) + 1)
+        else:
+            final_cnt = "xx"
 
         # kbeekim) 그냥 당일 날짜로 하자
         base_date = date.today()
@@ -170,7 +192,7 @@ class ExcelClass:
 
         self.sh5_last_date_text = f'{final_date} 내전{final_cnt}'
 
-        # kb.todo sheet5 우선 무조건 True
+        # kbeekim) sheet5 우선 True
         return True
 
     def get_sh5_update_cell_pos(self):
@@ -197,6 +219,11 @@ class ExcelClass:
 
     # SHEET4 와 관련 함수들
     def read_gspread_sheet4(self):
+        """ gspread sheet4 을 읽어와  self.sh4_end_row/self.sh4_last_date_text 를 설정한다.
+        Args:
+        Returns:
+            - 결과 성공/실패
+        """
         gc = gspread.service_account(filename=PATH)
         # self.doc = gc.open('Season.2022.SPRING')
         spreadsheet_url = G_GSPREAD_URL
@@ -207,18 +234,16 @@ class ExcelClass:
             print("오류 발생 - sheet 명칭 확인", e)
             return False
 
-        # 연계) 엑셀 시트 4의 L열 "here"문구로 마지막 행을 찾는다.
-        val = self.sheet4.col_values(12)
-        try:
-            self.sh4_end_row = val.index("here")
-        except Exception as e:
-            print("오류 발생 - sheet4 here 없음", e)
-            top_list = self.sheet4.col_values(2)
-            for cnt in range(len(top_list)):
-                top_row = cnt * 8 + 2
-                if len(top_list[top_row]) == 0:
-                    self.sh4_end_row = top_row - 1
-                    break
+        # 엑셀 시트 4의 L열 "here"문구로 마지막 행을 찾는다. -> 제거
+        # val = self.sheet4.col_values(12)
+        
+        # 연계) 엑셀 시트 4의 A1 기준 8칸마다 {날짜}+내전{순번} 문구가 빈 곳을 찾는다
+        top_list = self.sheet4.col_values(1)
+        for cnt in range(len(top_list)):
+            row = cnt * 8
+            if len(top_list[row]) == 0:
+                self.sh4_end_row = row + 1
+                break
 
         if G_DEFINE_DEBUG_MODE:
             print(f"sheet4 base row: {self.sh4_end_row} 행")
@@ -248,7 +273,7 @@ class ExcelClass:
         if G_DEFINE_DEBUG_MODE:
             print(f"sheet4 after : {self.sh4_last_date_text}")
 
-        # kb.todo sheet4 False True 조건 확인
+        # kbeekim) sheet4 우선 True
         return True
 
     def update_4_sheet(self, win_data, lose_data):
@@ -273,13 +298,30 @@ class ExcelClass:
         return f"L{self.sh4_end_row}"
 
     def get_sh4_last_date_text(self):
-        return self.sh5_last_date_text
+        return self.sh4_last_date_text
 
-        # champ_1 = self.sheet4.col_values(3)
-        # blue_champs = list(filter(None, champ_1))
-        #
-        # champ_2 = self.sheet4.col_values(9)
-        # red_champs = list(filter(None, champ_2))
-        #
-        # return blue_champs, red_champs
-        # sheet4_data = self.sheet4get_all_values()
+    """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+    """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+    def test(self):
+        # self.sh4_end_row 를 알고 있어야함
+        row = self.sh4_end_row - 1
+
+        # range_list = self.sheet4.get_all_values()
+        # print(range_list)
+
+        print(row)
+        range_start = f"B1:C{row}"
+
+        # win_data = []
+        # column_data = self.sheet4.range(range_start)
+        # print(len(column_data))
+        # for n, cell in enumerate(column_data):
+        #     if 0 <= n % (8*2) < 4:
+        #         print(f"{n}번쨰 {cell.value} 는 PASS!!!!")
+        #     elif n % (8*2) == 14:
+        #         print(f"{n}번쨰 {cell.value} 는 PASS!!!!")
+        #     elif n % (8 * 2) == 15:
+        #         print(f"{n}번쨰 {cell.value} 는 PASS!!!!")
+        #     elif n % (8 * 2) == 15:
+

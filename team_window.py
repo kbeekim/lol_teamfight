@@ -269,7 +269,7 @@ class TeamWindow(QDialog, form_class):
         str_2 = f"2팀: {self.get_short_nick(teamB_list[0])} {self.get_short_nick(teamB_list[1])} " \
                 f"{self.get_short_nick(teamB_list[2])} {self.get_short_nick(teamB_list[3])} {self.get_short_nick(teamB_list[4])} "
 
-        result_txt = "~~~~~~~~~..\n" + str_1 + "\n" + str_2
+        result_txt = "v~~~~~~~~~\n" + str_1 + "\n" + str_2
         self.team_edit.setText(result_txt)
 
         if G_DEFINE_DEBUG_MODE:
@@ -306,12 +306,17 @@ class TeamWindow(QDialog, form_class):
             ValvePopup(POPUP_TYPE_OK, "확인창", "[Error] 엑셀 확인 필요")
             return 
         
-        # kb.todo sh4 날짜는?
+        # kbeekim) 챔피언 입력 없이 sh5만 사용할 수 있으니 sh5만!
         date_text = excel_data.get_sh5_last_date_text()
         self.sh5_upload_list.clear()
         self.sh4_upload_win_list.clear()
         self.sh4_upload_lose_list.clear()
         champ_input_complete = True
+
+        tmp_nick_win = ""
+        tmp_nick_lose = ""
+        champ_win = ""
+        champ_lose = ""
 
         for n in range(5):  # 한 팀 5명
             self.tableWidget.setItem(n, 0, QTableWidgetItem(date_text))
@@ -347,6 +352,7 @@ class TeamWindow(QDialog, form_class):
                 champ_input_complete = False
 
         # Check Validation
+        tmp_str = ""
         if not champ_input_complete:
             tmp_str = "챔피언 입력 필요"
             self.update_champ_ready = False
@@ -357,7 +363,6 @@ class TeamWindow(QDialog, form_class):
             tmp_str = "2팀 승리!\n입력 준비 완료"
             self.update_champ_ready = True
 
-        # kb.todo sheet5 우선은 모두 성공으로 판단
         ValvePopup(POPUP_TYPE_OK, "확인창", tmp_str)
 
         self.update_ready = True
@@ -371,7 +376,7 @@ class TeamWindow(QDialog, form_class):
             print(self.sh4_upload_lose_list)
 
     def clicked_upload_btn(self):
-        # kb.todo 예외처리
+        # kb.todo 예외처리 추가
         if self.sh5_upload_list is None:
             return
         if self.sh4_upload_win_list is None:
@@ -389,7 +394,7 @@ class TeamWindow(QDialog, form_class):
                 elif self.sh4_upload_radio_btn.isChecked():
                     excel_data.update_4_sheet(self.sh4_upload_win_list, self.sh4_upload_lose_list)
 
-                # kb.todo sheet5 4 우선은 모두 성공으로 판단
+                # kbeekim) update_4_sheet / update_5_sheet return 값이 없어 모두 성공처리
                 ValvePopup(POPUP_TYPE_OK, "확인창", "업로드 성공!")
 
                 self.close()
@@ -397,7 +402,7 @@ class TeamWindow(QDialog, form_class):
                 if self.sh45_both_upload_radio_btn.isChecked():
                     ValvePopup(POPUP_TYPE_OK, "확인창", "챔피언을 입력해주세요!")
                 elif self.sh5_upload_radio_btn.isChecked():
-                    # kb.todo 조정 단계로 5시트만 입력 가능하도록 함
+                    # kbeekim) 조정 단계로 5시트만 입력도 가능하도록 함
                     excel_data.update_5_sheet(self.sh5_upload_list)
                     ValvePopup(POPUP_TYPE_OK, "확인창", "다음부턴 챔피언도 입력해 주세요! \n 업로드 성공!")
                     self.close()

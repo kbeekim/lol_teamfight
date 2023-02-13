@@ -179,6 +179,7 @@ class WindowClass(QMainWindow, form_class):
         if G_DEFINE_DEBUG_MODE:
             print("[kb.debug] load btn 시, 기존 tmp list : " + str(tmp_list))
 
+        #kb.test
         self.pd = QProgressDialog("데이터를 로딩 중 입니다.", None, 0, 0)
         self.pd.setWindowModality(Qt.ApplicationModal)
 
@@ -195,7 +196,7 @@ class WindowClass(QMainWindow, form_class):
         # kbeekim) 굳이 소멸 시키지 않아도 다음번 thread 생성 시, 자동 소멸이 된다.
         # 오히려 두 번 소멸 된다고 떠서 주석 처리..
         # self.excel_thread.delete()
-        
+
         # progress dialog 취소
         self.pd.cancel()
 
