@@ -303,25 +303,39 @@ class ExcelClass:
     """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
     """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-    def test(self):
-        # self.sh4_end_row 를 알고 있어야함
+    def get_analysis_data(self):
+        # self.sh4_end_row 를 알고 있어야함! (sh4 read first)
         row = self.sh4_end_row - 1
 
-        # range_list = self.sheet4.get_all_values()
-        # print(range_list)
+        if G_DEFINE_DEBUG_MODE:
+            print(f"sh4 마지막 row {row}")
 
-        print(row)
-        range_start = f"B1:C{row}"
+        win_excel_range = f"B1:C{row}"
+        win_list = []
+        tmp_list = []
+        win_data = self.sheet4.range(win_excel_range)
 
-        # win_data = []
-        # column_data = self.sheet4.range(range_start)
-        # print(len(column_data))
-        # for n, cell in enumerate(column_data):
-        #     if 0 <= n % (8*2) < 4:
-        #         print(f"{n}번쨰 {cell.value} 는 PASS!!!!")
-        #     elif n % (8*2) == 14:
-        #         print(f"{n}번쨰 {cell.value} 는 PASS!!!!")
-        #     elif n % (8 * 2) == 15:
-        #         print(f"{n}번쨰 {cell.value} 는 PASS!!!!")
-        #     elif n % (8 * 2) == 15:
+        #kb.todo 정합성 검증
+        for n, cell in enumerate(win_data):
+            if 4 <= n % (8*2) < 14:
+                tmp_list.append(cell.value)
+            elif n % (8*2) == 15:
+                win_list.append(tmp_list)
+                tmp_list = []
 
+        lose_excel_range = f"H1:I{row}"
+        lost_list = []
+        tmp_list = []
+        lose_data = self.sheet4.range(lose_excel_range)
+        for n, cell in enumerate(lose_data):
+            if 4 <= n % (8*2) < 14:
+                tmp_list.append(cell.value)
+            elif n % (8*2) == 15:
+                lost_list.append(tmp_list)
+                tmp_list = []
+
+        if G_DEFINE_DEBUG_MODE:
+            print(f"Win List {win_list}")
+            print(f"Lost List {lost_list}")
+
+        return win_list, lost_list
