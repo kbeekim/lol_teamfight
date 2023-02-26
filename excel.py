@@ -110,22 +110,27 @@ class ExcelClass:
         self.total_member = len(self.worker_info)
         return ret
 
-    def get_worker_name(self):
-        """ self.work_info 리스트 에서 이름 리스트를 리턴한다.
+    def get_worker_name(self, over_entry):
+        """ self.work_info 리스트 에서 참여 횟수 이상의 이름 리스트를 리턴한다.
         Args:
+            - over_entry 참여 횟수
         Returns:
             - worker 이름 리스트
         """
         worker_name = []
-        for i in range(0, self.total_member):
-            # kbeekim) 23.02.10 닉네임 변경 대비, subname 추가
-            if len(self.worker_info[i]['SUBNAME']) != 0:
-                worker_name.append(self.worker_info[i]['SUBNAME'])  # 연계
-            else:
-                worker_name.append(self.worker_info[i]['NICKNAME'])  # 연계
+        # kbeekim) 23.02.26 over_entry 추가
+        if over_entry > 0:
+            for i in range(0, self.total_member):
+                if (self.worker_info[i]['ENTRY']) >= over_entry:
+                    worker_name.append(self.worker_info[i]['NICKNAME'])  # 연계
+        else:
+            for i in range(0, self.total_member):
+                # kbeekim) 23.02.10 닉네임 변경 대비, subname 추가
+                if len(self.worker_info[i]['SUBNAME']) != 0:
+                    worker_name.append(self.worker_info[i]['SUBNAME'])  # 연계
+                else:
+                    worker_name.append(self.worker_info[i]['NICKNAME'])  # 연계
 
-        # kbeekim) 엑셀에서 참여율 순으로 sort 하기로 함 22.04.12 (기획팀 협의)
-        # return sorted(worker_nickname)
         return worker_name
 
     def get_worker_info_by_name(self, name):

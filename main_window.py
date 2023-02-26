@@ -81,7 +81,7 @@ class WindowClass(QMainWindow, form_class):
                 self.player_btn_list[turn].clicked.connect(self.clicked_player_btn)
                 self.gridLayout.addWidget(self.player_btn_list[turn], x, y)
 
-        tab2 = main_second_window.SecondWindow(self)
+        tab2 = main_second_window.SecondWindow(self, excel_data)
         self.tabWidget.addTab(tab2, '데이터 확인')
         
         # 초기화 버튼
@@ -444,7 +444,7 @@ class WindowClass(QMainWindow, form_class):
 
     def load_worker_list(self, order):
         self.worker_list_widget.clear()
-        tmp_list = excel_data.get_worker_name()
+        tmp_list = excel_data.get_worker_name(0)
 
         if order == WORKER_ORDER_FREQUENCY:
             self.nick_list = tmp_list
