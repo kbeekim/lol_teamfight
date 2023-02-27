@@ -55,15 +55,52 @@ class SecondWindow(QWidget, form_class):
     def __init__(self, parent, excel_8_data):
         super().__init__()
         self.setupUi(self)
-        self.data_load_btn.clicked.connect(self.clicked_data_load_btn)
 
         self.ex8_data = excel_8_data
         self.special_worker = []
         self.record_data = []
 
-        self.special_worker_list.setSelectionMode(3)
+        self.spworker_list_widget.setSelectionMode(3)
+
+        #kb.todo
         self.combo_table.setRowCount(10)
         self.combo_table.setColumnCount(7)
+
+        self.user01_btn.setCheckable(True)
+        self.user02_btn.setCheckable(True)
+
+        # 데이터 로드 버튼 클릭 시
+        self.data_load_btn.clicked.connect(self.clicked_data_load_btn)
+        # 특별 인력 리스트 더블 클릭 시
+        self.spworker_list_widget.itemDoubleClicked.connect(self.double_clicked_spworker)
+        # 콤비 버튼 클릭 시
+        self.combo_bnt.clicked.connect(self.clicked_show_combo_btn)
+
+    def double_clicked_spworker(self):
+        print(self.spworker_list_widget.selectedItems()[0].text())
+        self.insert_spworker_to_user(self.spworker_list_widget.selectedItems()[0].text())
+
+    def insert_spworker_to_user(self, user):
+        able_btn = self.checked_able_user_btn()
+
+        if able_btn is not None:
+            able_btn.setText(user)
+            able_btn.toggle()
+        # else:
+            # ValvePopup(POPUP_TYPE_OK, "확인창", "두 명이 모두 찼어요!")
+
+
+
+    def checked_able_user_btn(self):
+        btn = None
+        if self.user01_btn.isChecked():
+            if self.user02_btn.isChecked():
+                btn = None
+            else:
+                btn = self.user02_btn
+        else:
+                btn = self.user01_btn
+        return btn
 
     def clicked_data_load_btn(self):
         if not excel_data.read_gspread_sheet4():
@@ -96,18 +133,149 @@ class SecondWindow(QWidget, form_class):
             ValvePopup(POPUP_TYPE_OK, "확인창", "데이터 로드 성공! (sh4.게임결과(입력))")
 
             for worker in special_worker:
-                self.special_worker_list.addItem(worker)
+                self.spworker_list_widget.addItem(worker)
         else:
             ValvePopup(POPUP_TYPE_OK, "확인창", "데이터가 올바르지않습니다. (sh4.게임결과(입력))")
 
-        # print(len(self.record_data))
-        # print(self.record_data)
+    def clicked_show_combo_btn(self):
+        #kb.todo 예외처리 버튼 2개 확인 / 데이터 로드확인
+        self.print_combo_data(self.user01_btn.text(), self.user02_btn.text())
 
-        user1 = "롤리폴리팝"
-        user2 = "준꿀"
+    def print_combo_data(self, user1, user2):
+        #    [0]       [1]     [2]       [3]       [4]       [5]       [6]
+        # 내선 순번 / 1 승,패 / 2 승,패 / 1 포지션 / 1 챔피언 / 2 포지션 / 2 챔피언
+        combo_data, user1_record, user2_record = self.make_combo_data(user1, user2)
+        to_win_cnt = 0
+        to_lose_cnt = 0
+        en_win_cnt = 0
+        en_lose_cnt = 0
 
-        print(f"{user1} 과 {user2} 의 궁합 데이터 산출!")
-        self.print_combo_data(user1, user2)
+        table_title = ["내전 순번", f"[{user1}]승/패 ", f"[{user2}]승/패",
+                       f"[{user1}]포지션", f"[{user1}]챔피언", f"[{user2}]포지션", f"[{user2}]챔피언"]
+
+        for cnt_n, n_data in enumerate(combo_data):
+            if n_data[1] == n_data[2]:  # 같은 팀
+                if n_data[1] == "WIN":  # 승리
+                    to_win_cnt += 1
+                else:
+                    to_lose_cnt += 1
+            else:  # 다른 팀
+                if n_data[1] == "WIN":  # 승리
+                    en_win_cnt += 1
+                else:
+                    en_lose_cnt += 1
+
+            for cnt_d in range(len(n_data)):
+                if cnt_n == 0:
+                    self.combo_table.setItem(0, cnt_d, QTableWidgetItem(str(table_title[cnt_d])))
+
+                self.combo_table.setItem(cnt_n + 1, cnt_d, QTableWidgetItem(str(combo_data[cnt_n][cnt_d])))
+
+        if to_win_cnt + to_lose_cnt == 0:
+            to_rate = 0
+        else:
+            to_rate = round(to_win_cnt / (to_win_cnt + to_lose_cnt), 2) * 100
+
+        if en_win_cnt + en_lose_cnt == 0:
+            en_rate = 0
+        else:
+            en_rate = round(en_win_cnt / (en_win_cnt + en_lose_cnt), 2) * 100
+
+        res_text = ""
+        res_text = (f"[{user1}]님과 [{user2}]님은 \n내전 총 [{len(self.record_data)}]판 중, [{len(combo_data)}]판을 같이 플레이 했습니다.\n\n"
+                    f"같은팀으로 총 {to_win_cnt + to_lose_cnt}판 | {to_win_cnt}승 {to_lose_cnt}패 하여 {to_rate} 승률을 기록했습니다.\n"
+                    f"다른팀으로 총 {en_win_cnt + en_lose_cnt}판 | {en_win_cnt}승 {en_lose_cnt}패 하여 {en_rate} 승률을 기록했습니다.")
+
+        self.comb_label.setText(res_text)
+
+        self.user1_label.setText(f"{user1} 님의 승률 데이터\n\n" + self.calc_odds(user1_record))
+        self.user2_label.setText(f"{user2} 님의 승률 데이터\n\n" + self.calc_odds(user2_record))
+
+    def make_combo_data(self, user1, user2):
+        combo_data = []
+
+        # record_data-> [[내선 IDX, 포지션, 승/패, 챔피언], ...
+        user1_record = self.check_user_record(user1)
+        user2_record = self.check_user_record(user2)
+
+        if len(user1_record) == 0 or len(user2_record) == 0:
+            return []
+
+        for user1_round in user1_record:
+            for user2_round in user2_record:
+                if user1_round[0] == user2_round[0]:  # 같은 게임 플레이
+                    combo_data.append(
+                        [user1_round[0] + 1, user1_round[2], user2_round[2], user1_round[1], user1_round[3],
+                         user2_round[1], user2_round[3]])
+
+        return combo_data, user1_record, user2_record
+
+    def check_user_record(self, user_name):
+        user_record = []
+        # [[내선 IDX, 포지션, 승/패, 챔피언],
+        for n, each_data in enumerate(self.record_data):
+            for pos in list(each_data.keys()):  # ['TOP', 'JUG', 'MID', 'ADC', 'SUP']:
+                pos_data = each_data.get(pos)
+                if user_name in pos_data:
+                    if pos_data.index(user_name) == 0:  # 이김
+                        user_record.append([n, pos, "WIN", pos_data[1]])
+                    else:  # 졌다
+                        user_record.append([n, pos, "LOSE", pos_data[3]])
+                    break
+
+        return user_record
+
+    def calc_odds(self, in_user_record):
+        # List 형식
+        # 순번,   포지션,    승/패,    챔피언
+        user_odds = {'TOP': [0, 0, 0, 0.0], 'JUG': [0, 0, 0, 0.0], 'MID': [0, 0, 0, 0.0], 'ADC': [0, 0, 0, 0.0],
+                     'SUP': [0, 0, 0, 0.0]}
+
+        # TOP : 승 패 전 승률
+        for n, dat in enumerate(in_user_record):
+            pos = dat[1]
+            wl = dat[2]
+
+            if pos == 'TOP':
+                if wl == 'WIN':
+                    user_odds.get('TOP')[0] += 1
+                else:
+                    user_odds.get('TOP')[1] += 1
+            elif pos == 'JUG':
+                if wl == 'WIN':
+                    user_odds.get('JUG')[0] += 1
+                else:
+                    user_odds.get('JUG')[1] += 1
+            elif pos == 'MID':
+                if wl == 'WIN':
+                    user_odds.get('MID')[0] += 1
+                else:
+                    user_odds.get('MID')[1] += 1
+            elif pos == 'ADC':
+                if wl == 'WIN':
+                    user_odds.get('ADC')[0] += 1
+                else:
+                    user_odds.get('ADC')[1] += 1
+            elif pos == 'SUP':
+                if wl == 'WIN':
+                    user_odds.get('SUP')[0] += 1
+                else:
+                    user_odds.get('SUP')[1] += 1
+
+        ret_text = ""
+        for pos in list(user_odds.keys()):  # ['TOP', 'JUG', 'MID', 'ADC', 'SUP']:
+            w_cnt = user_odds.get(pos)[0]
+            l_cnt = user_odds.get(pos)[1]
+            total_cnt = w_cnt + l_cnt
+
+            if total_cnt > 0:
+                odds = round((w_cnt / total_cnt), 4) * 100
+                user_odds.get(pos)[2] = total_cnt
+                user_odds.get(pos)[3] = odds
+
+                ret_text += str(f"{pos}전적: {user_odds.get(pos)[0]}승, {user_odds.get(pos)[1]}패, {user_odds.get(pos)[2]}전, 승률: {user_odds.get(pos)[3]}% \n")
+
+        return ret_text
 
     # def test_total_combo(self):
     #     comb_cases = gen_comb(self.special_worker, 2)
@@ -178,139 +346,3 @@ class SecondWindow(QWidget, form_class):
     #
     #     ret_data = [to_win_cnt, to_lose_cnt, to_rate]
     #     return ret_data
-
-    def print_combo_data(self, user1, user2):
-        #    [0]       [1]     [2]       [3]       [4]       [5]       [6]
-        # 내선 순번 / 1 승,패 / 2 승,패 / 1 포지션 / 1 챔피언 / 2 포지션 / 2 챔피언
-        combo_data = self.make_combo_data(user1, user2)
-        to_win_cnt = 0
-        to_lose_cnt = 0
-        en_win_cnt = 0
-        en_lose_cnt = 0
-
-        table_title = ["내전 순번", f"[{user1}]승/패 ", f"[{user2}]승/패",
-                       f"[{user1}]포지션", f"[{user1}]챔피언", f"[{user2}]포지션", f"[{user2}]챔피언"]
-
-        for cnt_n, n_data in enumerate(combo_data):
-            if n_data[1] == n_data[2]:  # 같은 팀
-                if n_data[1] == "WIN":  # 승리
-                    to_win_cnt += 1
-                else:
-                    to_lose_cnt += 1
-            else:  # 다른 팀
-                if n_data[1] == "WIN":  # 승리
-                    en_win_cnt += 1
-                else:
-                    en_lose_cnt += 1
-
-            for cnt_d in range(len(n_data)):
-                if cnt_n == 0:
-                    self.combo_table.setItem(0, cnt_d, QTableWidgetItem(str(table_title[cnt_d])))
-
-                self.combo_table.setItem(cnt_n + 1, cnt_d, QTableWidgetItem(str(combo_data[cnt_n][cnt_d])))
-
-        if to_win_cnt + to_lose_cnt == 0:
-            to_rate = 0
-        else:
-            to_rate = round(to_win_cnt / (to_win_cnt + to_lose_cnt), 2) * 100
-
-        if en_win_cnt + en_lose_cnt == 0:
-            en_rate = 0
-        else:
-            en_rate = round(en_win_cnt / (en_win_cnt + en_lose_cnt), 2) * 100
-
-        res_text = ""
-        res_text = (f"[{user1}]님과 [{user2}]님은 내전 총 [{len(self.record_data)}]판 중, [{len(combo_data)}]판을 같이 플레이 했습니다.\n"
-                    f"같은팀으로 총 {to_win_cnt + to_lose_cnt}판 | {to_win_cnt}승 {to_lose_cnt}패 하여 {to_rate} 승률을 기록했습니다.\n"
-                    f"다른팀으로 총 {en_win_cnt + en_lose_cnt}판 | {en_win_cnt}승 {en_lose_cnt}패 하여 {en_rate} 승률을 기록했습니다.")
-
-        self.comb_label.setText(res_text)
-
-
-
-    def make_combo_data(self, user1, user2):
-        combo_data = []
-
-        # record_data-> [[내선 IDX, 포지션, 승/패, 챔피언], ...
-        user1_record = self.check_user_record(user1)
-        user2_record = self.check_user_record(user2)
-
-        if len(user1_record) == 0 or len(user2_record) == 0:
-            return []
-
-        for user1_round in user1_record:
-            for user2_round in user2_record:
-                if user1_round[0] == user2_round[0]:  # 같은 게임 플레이
-                    combo_data.append(
-                        [user1_round[0] + 1, user1_round[2], user2_round[2], user1_round[1], user1_round[3],
-                         user2_round[1], user2_round[3]])
-
-        return combo_data
-
-    def check_user_record(self, user_name):
-        user_record = []
-        # [[내선 IDX, 포지션, 승/패, 챔피언],
-        for n, each_data in enumerate(self.record_data):
-            for pos in list(each_data.keys()):  # ['TOP', 'JUG', 'MID', 'ADC', 'SUP']:
-                pos_data = each_data.get(pos)
-                if user_name in pos_data:
-                    if pos_data.index(user_name) == 0:  # 이김
-                        user_record.append([n, pos, "WIN", pos_data[1]])
-                    else:  # 졌다
-                        user_record.append([n, pos, "LOSE", pos_data[3]])
-                    break
-
-        return user_record
-
-    def calc_odds(self, in_data):
-        # List 형식
-        # 순번,   포지션,    승/패,    챔피언
-        user_odds = {'TOP': [0, 0, 0, 0.0], 'JUG': [0, 0, 0, 0.0], 'MID': [0, 0, 0, 0.0], 'ADC': [0, 0, 0, 0.0],
-                     'SUP': [0, 0, 0, 0.0]}
-
-        # TOP : 승 패 전 승률
-        for n, dat in enumerate(in_data):
-            print(dat)
-            pos = dat[1]
-            wl = dat[2]
-
-            if pos == 'TOP':
-                if wl == 'WIN':
-                    user_odds.get('TOP')[0] += 1
-                else:
-                    user_odds.get('TOP')[1] += 1
-            elif pos == 'JUG':
-                if wl == 'WIN':
-                    user_odds.get('JUG')[0] += 1
-                else:
-                    user_odds.get('JUG')[1] += 1
-            elif pos == 'MID':
-                if wl == 'WIN':
-                    user_odds.get('MID')[0] += 1
-                else:
-                    user_odds.get('MID')[1] += 1
-            elif pos == 'ADC':
-                if wl == 'WIN':
-                    user_odds.get('ADC')[0] += 1
-                else:
-                    user_odds.get('ADC')[1] += 1
-            elif pos == 'SUP':
-                if wl == 'WIN':
-                    user_odds.get('SUP')[0] += 1
-                else:
-                    user_odds.get('SUP')[1] += 1
-
-        print(f"*******************************")
-
-        for pos in list(user_odds.keys()):  # ['TOP', 'JUG', 'MID', 'ADC', 'SUP']:
-            w_cnt = user_odds.get(pos)[0]
-            l_cnt = user_odds.get(pos)[1]
-            total_cnt = w_cnt + l_cnt
-
-            if total_cnt > 0:
-                odds = round((w_cnt / total_cnt), 2) * 100
-                user_odds.get(pos)[2] = total_cnt
-                user_odds.get(pos)[3] = odds
-
-            print(
-                f"{pos}전적: {user_odds.get(pos)[0]}승, {user_odds.get(pos)[1]}패, {user_odds.get(pos)[2]}전, 승률: {user_odds.get(pos)[3]}%")

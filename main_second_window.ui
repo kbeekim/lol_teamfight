@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>825</width>
-    <height>676</height>
+    <width>1053</width>
+    <height>788</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -16,9 +16,9 @@
   <widget class="QPushButton" name="data_load_btn">
    <property name="geometry">
     <rect>
-     <x>30</x>
-     <y>30</y>
-     <width>471</width>
+     <x>120</x>
+     <y>20</y>
+     <width>431</width>
      <height>51</height>
     </rect>
    </property>
@@ -34,8 +34,8 @@
   <widget class="QPushButton" name="user01_btn">
    <property name="geometry">
     <rect>
-     <x>50</x>
-     <y>120</y>
+     <x>120</x>
+     <y>100</y>
      <width>201</width>
      <height>81</height>
     </rect>
@@ -47,8 +47,8 @@
   <widget class="QPushButton" name="user02_btn">
    <property name="geometry">
     <rect>
-     <x>300</x>
-     <y>120</y>
+     <x>370</x>
+     <y>100</y>
      <width>181</width>
      <height>81</height>
     </rect>
@@ -57,10 +57,10 @@
     <string>PushButton</string>
    </property>
   </widget>
-  <widget class="QListWidget" name="special_worker_list">
+  <widget class="QListWidget" name="spworker_list_widget">
    <property name="geometry">
     <rect>
-     <x>540</x>
+     <x>670</x>
      <y>30</y>
      <width>256</width>
      <height>221</height>
@@ -71,9 +71,9 @@
    <property name="geometry">
     <rect>
      <x>30</x>
-     <y>320</y>
-     <width>761</width>
-     <height>192</height>
+     <y>300</y>
+     <width>991</width>
+     <height>171</height>
     </rect>
    </property>
   </widget>
@@ -81,8 +81,8 @@
    <property name="geometry">
     <rect>
      <x>30</x>
-     <y>270</y>
-     <width>761</width>
+     <y>260</y>
+     <width>991</width>
      <height>41</height>
     </rect>
    </property>
@@ -94,9 +94,48 @@
    <property name="geometry">
     <rect>
      <x>30</x>
-     <y>530</y>
-     <width>761</width>
-     <height>61</height>
+     <y>500</y>
+     <width>371</width>
+     <height>121</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>TextLabel</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="combo_bnt">
+   <property name="geometry">
+    <rect>
+     <x>80</x>
+     <y>200</y>
+     <width>511</width>
+     <height>51</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>PushButton</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="user1_label">
+   <property name="geometry">
+    <rect>
+     <x>450</x>
+     <y>500</y>
+     <width>251</width>
+     <height>131</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>TextLabel</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="user2_label">
+   <property name="geometry">
+    <rect>
+     <x>750</x>
+     <y>500</y>
+     <width>241</width>
+     <height>131</height>
     </rect>
    </property>
    <property name="text">
