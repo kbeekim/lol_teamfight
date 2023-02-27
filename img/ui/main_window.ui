@@ -29,7 +29,7 @@
       <x>0</x>
       <y>0</y>
       <width>1161</width>
-      <height>651</height>
+      <height>700</height>
      </rect>
     </property>
     <property name="font">
@@ -366,7 +366,7 @@
      <x>0</x>
      <y>0</y>
      <width>1051</width>
-     <height>22</height>
+     <height>21</height>
     </rect>
    </property>
   </widget>
