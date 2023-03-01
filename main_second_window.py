@@ -1,5 +1,10 @@
+from functools import partial
+
 from PyQt5 import uic
+from PyQt5.QtCore import QSize, Qt
+from PyQt5.QtGui import QIcon, QPixmap
 from PyQt5.QtWidgets import QWidget, QTableWidgetItem
+from PyQt5.uic.properties import QtGui
 
 import excel
 from popup import ValvePopup, POPUP_TYPE_OK
@@ -23,6 +28,9 @@ SUP_USR_IDX = 8
 SUP_CMP_IDX = 9
 
 MIN_PLAY_GAMES = 5
+INIT_USER1_TXT = "인력1"
+INIT_USER2_TXT = "인력2"
+
 
 def gen_comb(arr, n):
     result = []
@@ -61,50 +69,159 @@ class SecondWindow(QWidget, form_class):
         self.record_data = []
 
         self.spworker_list_widget.setSelectionMode(3)
-
-        #kb.todo
+        # kb.todo
         self.combo_table.setRowCount(10)
         self.combo_table.setColumnCount(7)
 
-        self.user01_btn.setCheckable(True)
-        self.user02_btn.setCheckable(True)
+        png_img = ["download.png", "rotation.png", "clear.png", "versus.png"]
+        icon_btn = [self.data_load_btn, self.user_rotation_btn, self.clear_btn, self.versus_btn]
+        for idx, img in enumerate(png_img):
+            qicon = QPixmap(resource_path(img, '/img/'))
+            icon_btn[idx].setIcon(QIcon(qicon))
+            icon_btn[idx].setIconSize(QSize(48, 48))
+            if idx == 3:
+                icon_btn[idx].setStyleSheet(
+                    "background-color: white;"
+                    "border: 1px solid white;"
+                )
+            else:
+                icon_btn[idx].setStyleSheet(
+                    "background-color: white;"
+                )
+        self.combo_bnt.setStyleSheet(
+            "color: black;"
+            "background-color: white;"
+            "border: 2px solid black;"
+            "border-radius: 5px;"
+        )
 
-        # 데이터 로드 버튼 클릭 시
-        self.data_load_btn.clicked.connect(self.clicked_data_load_btn)
-        # 특별 인력 리스트 더블 클릭 시
-        self.spworker_list_widget.itemDoubleClicked.connect(self.double_clicked_spworker)
+        # 콤보 버튼 숨기기
+        self.combo_bnt.hide()
         # 콤비 버튼 클릭 시
         self.combo_bnt.clicked.connect(self.clicked_show_combo_btn)
+        # 특별 인력 리스트 더블 클릭 시
+        self.spworker_list_widget.itemDoubleClicked.connect(self.double_clicked_spworker)
+        # user01 버튼 클릭 시
+        self.user01_btn.clicked.connect(partial(self.clicked_user_btn, INIT_USER1_TXT))
+        # user02 버튼 클릭 시
+        self.user02_btn.clicked.connect(partial(self.clicked_user_btn, INIT_USER2_TXT))
+        # 데이터 로드 버튼 클릭 시
+        self.data_load_btn.clicked.connect(self.clicked_data_load_btn)
+        # user rotation 버튼 클릭 시
+        self.user_rotation_btn.clicked.connect(self.clicked_rotation_btn)
+        # clear 버튼 클릭 시
+        self.clear_btn.clicked.connect(self.clicked_clear_btn)
+        # versus 버튼 클릭 시 (rotation 과 동일 기능)
+        self.versus_btn.clicked.connect(self.clicked_rotation_btn)
+
+        self.user_txt = [INIT_USER1_TXT, INIT_USER2_TXT]
+        self.print_user_txt()
+
+    def is_user_btn_empty(self, btn):
+        res = False
+        if btn == self.user01_btn:
+            if btn.text() == INIT_USER1_TXT:
+                res = True
+        if btn == self.user02_btn:
+            if btn.text() == INIT_USER2_TXT:
+                res = True
+        return res
+
+    def print_user_txt(self):
+        able_next = True
+        self.user01_btn.setText(self.user_txt[0])
+        self.user02_btn.setText(self.user_txt[1])
+
+        for user_btn in [self.user01_btn, self.user02_btn]:
+            # setText 를 했으니 여기서는 버튼Text 확인..
+            if self.is_user_btn_empty(user_btn):
+                user_btn.setStyleSheet(
+                    "color: black;"
+                    "background-color: white;"
+                    "border: 1px solid black;"
+                )
+                # 둘 중 하나라도 초기값이라면 준비안 된 상태
+                able_next = False
+            else:
+                user_btn.setStyleSheet(
+                    "color: black;"
+                    "background-color: white;"
+                    "border: 2px solid black;"
+                )
+
+        if able_next:
+            self.combo_bnt.show()
+        else:
+            self.combo_bnt.hide()
 
     def double_clicked_spworker(self):
-        print(self.spworker_list_widget.selectedItems()[0].text())
-        self.insert_spworker_to_user(self.spworker_list_widget.selectedItems()[0].text())
+        ret = False
+        # 단일 더블클릭 으로 [0] 인덱스!
+        tmp_user = self.spworker_list_widget.selectedItems()[0].text()
 
-    def insert_spworker_to_user(self, user):
-        able_btn = self.checked_able_user_btn()
-
-        if able_btn is not None:
-            able_btn.setText(user)
-            able_btn.toggle()
-        # else:
-            # ValvePopup(POPUP_TYPE_OK, "확인창", "두 명이 모두 찼어요!")
-
-
-
-    def checked_able_user_btn(self):
-        btn = None
-        if self.user01_btn.isChecked():
-            if self.user02_btn.isChecked():
-                btn = None
-            else:
-                btn = self.user02_btn
+        if self.user_txt[0] == INIT_USER1_TXT:
+            self.user_txt[0] = tmp_user
+            ret = True
         else:
-                btn = self.user01_btn
-        return btn
+            if self.user_txt[1] == INIT_USER2_TXT:
+                self.user_txt[1] = tmp_user
+                ret = True
+
+        if ret:
+            self.spworker_list_widget.selectedItems()[0].setFlags(Qt.NoItemFlags)
+            self.print_user_txt()
+
+    def clicked_user_btn(self, init_txt):
+        tmp_user = None
+        if init_txt == INIT_USER1_TXT:  # 1번 버튼 눌렀다!
+            if self.user_txt[0] != INIT_USER1_TXT:
+                tmp_user = self.user_txt[0]
+                self.user_txt[0] = INIT_USER1_TXT
+        elif init_txt == INIT_USER2_TXT:  # 2번 버튼 눌렀다!
+            if self.user_txt[1] != INIT_USER2_TXT:
+                tmp_user = self.user_txt[1]
+                self.user_txt[1] = INIT_USER2_TXT
+        else:
+            # 이상 오류
+            ValvePopup(POPUP_TYPE_OK, "오류창", "수상한 버튼을 입력했습니다.")
+            return
+
+        if tmp_user is not None:
+            for idx in range(self.spworker_list_widget.count()):
+                item = self.spworker_list_widget.item(idx)
+                if item.text() == tmp_user:
+                    item.setFlags(Qt.ItemIsEnabled | Qt.ItemIsSelectable)
+
+            self.print_user_txt()
+
+    def clear_user_btn(self):
+        if not self.is_user_btn_empty(self.user01_btn):
+            self.clicked_user_btn(INIT_USER1_TXT)
+        if not self.is_user_btn_empty(self.user02_btn):
+            self.clicked_user_btn(INIT_USER2_TXT)
+
+    def clicked_rotation_btn(self):
+        # 서로 전환
+        tmp_user = self.user_txt[0]
+        self.user_txt[0] = self.user_txt[1]
+        self.user_txt[1] = tmp_user
+
+        # 초기값은 고정
+        if self.user_txt[0] == INIT_USER2_TXT:
+            self.user_txt[0] = INIT_USER1_TXT
+        if self.user_txt[1] == INIT_USER1_TXT:
+            self.user_txt[1] = INIT_USER2_TXT
+
+        self.print_user_txt()
 
     def clicked_data_load_btn(self):
+        # 일단 화면 초기화
+        self.clicked_clear_btn()
+        self.spworker_list_widget.clear()
+
         if not excel_data.read_gspread_sheet4():
             ValvePopup(POPUP_TYPE_OK, "오류창", "엑셀 시트4 데이터 확인 필요")
+            return
 
         win_list, lost_list = excel_data.get_analysis_data()
         self.record_data = []
@@ -137,9 +254,23 @@ class SecondWindow(QWidget, form_class):
         else:
             ValvePopup(POPUP_TYPE_OK, "확인창", "데이터가 올바르지않습니다. (sh4.게임결과(입력))")
 
+    def clicked_clear_btn(self):
+        self.combo_table.clear()
+        self.comb_label.clear()
+        self.user1_label.clear()
+        self.user2_label.clear()
+        self.clear_user_btn()
+
     def clicked_show_combo_btn(self):
-        #kb.todo 예외처리 버튼 2개 확인 / 데이터 로드확인
-        self.print_combo_data(self.user01_btn.text(), self.user02_btn.text())
+        # 혹시 모를 예외처리들 - 데이터 확인 / 버튼 2개 확인
+        if len(self.record_data) == 0:
+            ValvePopup(POPUP_TYPE_OK, "확인창", "데이터 확인 바랍니다.")
+        elif self.is_user_btn_empty(self.user01_btn):
+            ValvePopup(POPUP_TYPE_OK, "확인창", f"{INIT_USER1_TXT} 탈주한 것으로 보입니다.")
+        elif self.is_user_btn_empty(self.user02_btn):
+            ValvePopup(POPUP_TYPE_OK, "확인창", f"{INIT_USER2_TXT} 탈주한 것으로 보입니다.")
+        else:
+            self.print_combo_data(self.user01_btn.text(), self.user02_btn.text())
 
     def print_combo_data(self, user1, user2):
         #    [0]       [1]     [2]       [3]       [4]       [5]       [6]
@@ -174,17 +305,18 @@ class SecondWindow(QWidget, form_class):
         if to_win_cnt + to_lose_cnt == 0:
             to_rate = 0
         else:
-            to_rate = round(to_win_cnt / (to_win_cnt + to_lose_cnt), 2) * 100
+            to_rate = round(to_win_cnt / (to_win_cnt + to_lose_cnt), 4) * 100
 
         if en_win_cnt + en_lose_cnt == 0:
             en_rate = 0
         else:
-            en_rate = round(en_win_cnt / (en_win_cnt + en_lose_cnt), 2) * 100
+            en_rate = round(en_win_cnt / (en_win_cnt + en_lose_cnt), 4) * 100
 
         res_text = ""
-        res_text = (f"[{user1}]님과 [{user2}]님은 \n내전 총 [{len(self.record_data)}]판 중, [{len(combo_data)}]판을 같이 플레이 했습니다.\n\n"
-                    f"같은팀으로 총 {to_win_cnt + to_lose_cnt}판 | {to_win_cnt}승 {to_lose_cnt}패 하여 {to_rate} 승률을 기록했습니다.\n"
-                    f"다른팀으로 총 {en_win_cnt + en_lose_cnt}판 | {en_win_cnt}승 {en_lose_cnt}패 하여 {en_rate} 승률을 기록했습니다.")
+        res_text = (
+            f"[{user1}]님과 [{user2}]님은 \n내전 총 [{len(self.record_data)}]판 중, [{len(combo_data)}]판을 같이 플레이 했습니다.\n\n"
+            f"같은팀으로 총 {to_win_cnt + to_lose_cnt}판 | {to_win_cnt}승 {to_lose_cnt}패 하여 {to_rate} 승률을 기록했습니다.\n"
+            f"다른팀으로 총 {en_win_cnt + en_lose_cnt}판 | {en_win_cnt}승 {en_lose_cnt}패 하여 {en_rate} 승률을 기록했습니다.")
 
         self.comb_label.setText(res_text)
 
@@ -195,8 +327,8 @@ class SecondWindow(QWidget, form_class):
         combo_data = []
 
         # record_data-> [[내선 IDX, 포지션, 승/패, 챔피언], ...
-        user1_record = self.check_user_record(user1)
-        user2_record = self.check_user_record(user2)
+        user1_record = self.make_user_record(user1)
+        user2_record = self.make_user_record(user2)
 
         if len(user1_record) == 0 or len(user2_record) == 0:
             return []
@@ -210,7 +342,7 @@ class SecondWindow(QWidget, form_class):
 
         return combo_data, user1_record, user2_record
 
-    def check_user_record(self, user_name):
+    def make_user_record(self, user_name):
         user_record = []
         # [[내선 IDX, 포지션, 승/패, 챔피언],
         for n, each_data in enumerate(self.record_data):
@@ -273,7 +405,8 @@ class SecondWindow(QWidget, form_class):
                 user_odds.get(pos)[2] = total_cnt
                 user_odds.get(pos)[3] = odds
 
-                ret_text += str(f"{pos}전적: {user_odds.get(pos)[0]}승, {user_odds.get(pos)[1]}패, {user_odds.get(pos)[2]}전, 승률: {user_odds.get(pos)[3]}% \n")
+                ret_text += str(
+                    f"{pos}전적: {user_odds.get(pos)[0]}승, {user_odds.get(pos)[1]}패, {user_odds.get(pos)[2]}전, 승률: {user_odds.get(pos)[3]}% \n")
 
         return ret_text
 
@@ -310,13 +443,13 @@ class SecondWindow(QWidget, form_class):
     #     print(highest_list)
     #     print(lowest_list)
 
-        # print(f"**시즌 최고의 듀오**")
-        # print(f"{highest_list[0]} {highest_list[1]} : {highest_list[3]} 승, {highest_list[4]} 패 로 승률 {highest_list[2]}")
-        # print(self.print_combo_data(highest_list[0], highest_list[1]))
-        #
-        # print(f"**시즌 최악의 듀오**")
-        # print(f"{lowest_list[0]} {lowest_list[1]} : {lowest_list[3]} 승, {lowest_list[4]} 패 로 승률 {lowest_list[2]}")
-        # print(self.print_combo_data(lowest_list[0], lowest_list[1]))
+    # print(f"**시즌 최고의 듀오**")
+    # print(f"{highest_list[0]} {highest_list[1]} : {highest_list[3]} 승, {highest_list[4]} 패 로 승률 {highest_list[2]}")
+    # print(self.print_combo_data(highest_list[0], highest_list[1]))
+    #
+    # print(f"**시즌 최악의 듀오**")
+    # print(f"{lowest_list[0]} {lowest_list[1]} : {lowest_list[3]} 승, {lowest_list[4]} 패 로 승률 {lowest_list[2]}")
+    # print(self.print_combo_data(lowest_list[0], lowest_list[1]))
 
     # def test_combo_data(self, user1, user2):
     #     #    [0]       [1]     [2]       [3]       [4]       [5]       [6]
