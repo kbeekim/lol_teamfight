@@ -118,6 +118,7 @@ class ExcelClass:
             - worker 이름 리스트
         """
         worker_name = []
+
         # kbeekim) 23.02.26 over_entry 추가
         if over_entry > 0:
             for i in range(0, self.total_member):
@@ -320,7 +321,7 @@ class ExcelClass:
         tmp_list = []
         win_data = self.sheet4.range(win_excel_range)
 
-        #kb.todo 정합성 검증
+        #kb.todo 정합성 검증 추가
         for n, cell in enumerate(win_data):
             if 4 <= n % (8*2) < 14:
                 tmp_list.append(cell.value)

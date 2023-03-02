@@ -69,8 +69,8 @@ class SecondWindow(QWidget, form_class):
         self.record_data = []
 
         self.spworker_list_widget.setSelectionMode(3)
-        # kb.todo
-        self.combo_table.setRowCount(10)
+
+        self.combo_table.setRowCount(5)     # 출력 시, setRowCount 를 데이터 라인 수만큼 다시한다.
         self.combo_table.setColumnCount(7)
 
         png_img = ["download.png", "rotation.png", "clear.png", "versus.png"]
@@ -284,6 +284,8 @@ class SecondWindow(QWidget, form_class):
         table_title = ["내전 순번", f"[{user1}]승/패 ", f"[{user2}]승/패",
                        f"[{user1}]포지션", f"[{user1}]챔피언", f"[{user2}]포지션", f"[{user2}]챔피언"]
 
+        self.combo_table.setRowCount(len(combo_data) + 1)
+
         for cnt_n, n_data in enumerate(combo_data):
             if n_data[1] == n_data[2]:  # 같은 팀
                 if n_data[1] == "WIN":  # 승리
@@ -320,8 +322,8 @@ class SecondWindow(QWidget, form_class):
 
         self.comb_label.setText(res_text)
 
-        self.user1_label.setText(f"{user1} 님의 승률 데이터\n\n" + self.calc_odds(user1_record))
-        self.user2_label.setText(f"{user2} 님의 승률 데이터\n\n" + self.calc_odds(user2_record))
+        self.user1_label.setText(f"{user1} 님의 내전 승률\n\n" + self.calc_odds(user1_record))
+        self.user2_label.setText(f"{user2} 님의 내전 승률\n\n" + self.calc_odds(user2_record))
 
     def make_combo_data(self, user1, user2):
         combo_data = []

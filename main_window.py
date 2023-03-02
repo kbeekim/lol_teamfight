@@ -73,7 +73,7 @@ class WindowClass(QMainWindow, form_class):
                 self.set_style_player_btn(turn, str(turn + 1), PLAYER_FLAG_DEFAULT)
 
                 self.player_btn_list[turn].setMaximumHeight(70)  # 버튼 높이 강제 조절
-                self.player_btn_list[turn].setFont(QFont("맑은 고딕", 15))  # 폰트,크기 조절
+                self.player_btn_list[turn].setFont(QFont(G_FONT, 15))  # 폰트,크기 조절
 
                 # 버튼의 idx를 알기위해 ObjectName으로 정함
                 self.player_btn_list[turn].setObjectName(str(turn))

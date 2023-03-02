@@ -11,6 +11,7 @@ from PyQt5.QtGui import QDragEnterEvent, QDrag, QPixmap, QFont
 
 import excel
 import champ_window
+import multi_champ_window
 from popup import ValvePopup, POPUP_TYPE_OK
 from global_settings import *
 from thread import Thread
@@ -89,6 +90,7 @@ class TeamWindow(QDialog, form_class):
         # windowModality 설정을 NonModal -> ApplicationModal 으로 설정하여 해당 창을 종료 전까지 다른 창 사용 못하게 설정
         self.setWindowModality(Qt.ApplicationModal)
 
+        self.multi_champ_input = None
         self.champ_input = None
 
         self.update_ready = False
@@ -126,13 +128,14 @@ class TeamWindow(QDialog, form_class):
         self.team2_win_btn.clicked.connect(self.clicked_team2_win_btn)
         self.upload_btn.clicked.connect(self.clicked_upload_btn)
         self.close_btn.clicked.connect(self.clicked_close_btn)
+        self.multi_champ_btn.clicked.connect(self.clicked_multi_champ_btn)
 
         for idx in range(self.teamALayout.count()):  # 5명
-            # self.teamALayout.itemAt(idx).itemAt(TEAM_A_PLAYER_IDX).widget().clicked.connect(partial(self.clicked_champ_btn, self.teamALayout.itemAt(idx).itemAt(TEAM_A_CHAMP_IDX).widget()))
-            self.teamALayout.itemAt(idx).itemAt(TEAM_A_CHAMP_IDX).widget().clicked.connect(partial(self.clicked_champ_btn, self.teamALayout.itemAt(idx).itemAt(TEAM_A_CHAMP_IDX).widget()))
+            teamA_widget = self.teamALayout.itemAt(idx).itemAt(TEAM_A_CHAMP_IDX).widget()
+            teamA_widget.clicked.connect(partial(self.clicked_champ_btn, teamA_widget))
 
-            # self.teamALayout.itemAt(idx).itemAt(TEAM_B_PLAYER_IDX).widget().clicked.connect(partial(self.clicked_champ_btn, self.teamALayout.itemAt(idx).itemAt(TEAM_A_CHAMP_IDX).widget()))
-            self.teamBLayout.itemAt(idx).itemAt(TEAM_B_CHAMP_IDX).widget().clicked.connect(partial(self.clicked_champ_btn, self.teamBLayout.itemAt(idx).itemAt(TEAM_B_CHAMP_IDX).widget()))
+            teamB_widget = self.teamBLayout.itemAt(idx).itemAt(TEAM_B_CHAMP_IDX).widget()
+            teamB_widget.clicked.connect(partial(self.clicked_champ_btn, teamB_widget))
 
         # 기본은 4, 5 시트 동시 입력
         self.sh45_both_upload_radio_btn.click()
@@ -224,13 +227,13 @@ class TeamWindow(QDialog, form_class):
             else:
                 h_layout.addWidget(make_btn(True, None, 13, self.get_nickname(teamA_list[idx])))
 
-            h_layout.addWidget(make_btn(True, 180, 10, "(챔피언 입력)"))
+            h_layout.addWidget(make_btn(True, 180, 10, G_INIT_CHAMP_TXT))
             self.teamALayout.addLayout(h_layout)
 
         for idx, line in enumerate(line_list):
             h_layout = QHBoxLayout()
 
-            h_layout.addWidget(make_btn(True, 180, 10, "(챔피언 입력)"))
+            h_layout.addWidget(make_btn(True, 180, 10, G_INIT_CHAMP_TXT))
             # kbeekim) 23.02.10 닉네임 변경 대비, subname 추가
             subnick = self.get_subnick(teamB_list[idx])
             if len(subnick) > 0:
@@ -280,6 +283,17 @@ class TeamWindow(QDialog, form_class):
     def clicked_champ_btn(self, btn):
         self.champ_input = champ_window.ChampWindow(btn)
         self.champ_input.show()
+
+    # 2023.03.02 kbeekim 다중 챔피언 입력기능 추가
+    def clicked_multi_champ_btn(self):
+        champ_btn_list = []
+
+        for idx in range(self.teamALayout.count()):  # 5명
+            champ_btn_list.append(self.teamALayout.itemAt(idx).itemAt(TEAM_A_CHAMP_IDX).widget())
+            champ_btn_list.append(self.teamBLayout.itemAt(idx).itemAt(TEAM_B_CHAMP_IDX).widget())
+
+        self.multi_champ_input = multi_champ_window.MultiChampWindow(champ_btn_list)
+        self.multi_champ_input.show()
 
     def clicked_team1_win_btn(self):
         self.show_team_data(WIN_TEAM_A)
